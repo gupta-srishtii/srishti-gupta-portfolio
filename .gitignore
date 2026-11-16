@@ -1,0 +1,78 @@
+# ==============================================================================
+# Srishti Gupta Portfolio Universe — .gitignore
+# Stack: Next.js (App Router) + TypeScript + Tailwind CSS + Three.js / WebGL
+# ==============================================================================
+
+# Operating System Files
+desktop.ini
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs_vista.db
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# Next.js Build Outputs & Caches
+.next/
+out/
+build/
+dist/
+.swc/
+
+# Environment Variables & Secrets (Keep .env.example intact)
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Vercel Deployment Metadata
+.vercel/
+
+# TypeScript Caches
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# IDEs & Code Editors
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+*.bak
+
+# Temporary / Scratch Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# 3D DCC & Intermediate Assets (Blender backups, etc.)
+*.blend1
+*.blend2
+*.blend@
+
+# Personal Reference Assets & Photos (Kept local, never committed)
+assets/mascot/references/
+
