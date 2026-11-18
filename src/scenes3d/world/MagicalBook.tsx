@@ -271,10 +271,15 @@ export default function MagicalBook({
     direction = useRef(1),
     wasOpen = useRef(false);
   const outgoing = useRef<THREE.Texture | null>(null);
-  const textures = useMemo(
-    () => (open ? [paper(page, 0, reading), paper(page, 1, reading)] : []),
-    [open, page, reading],
-  );
+  const textures = useMemo(() => {
+    if (!open) return [];
+    const left = paper(page, 0, reading);
+    const verso = left.clone();
+    verso.repeat.x = -1;
+    verso.offset.x = 1;
+    verso.needsUpdate = true;
+    return [left, paper(page, 1, reading), verso];
+  }, [open, page, reading]);
   useEffect(() => () => textures.forEach((texture) => texture.dispose()), [textures]);
   useEffect(() => () => outgoing.current?.dispose(), []);
   const geometry = useMemo(() => {
@@ -398,18 +403,20 @@ export default function MagicalBook({
         distance={2.4}
         intensity={0}
       />
-      <mesh
-        position={[0, 0.138, 0]}
-        rotation-x={-Math.PI / 2}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (open && !reading) enterRealm(chapters[page].realm);
-        }}
-        receiveShadow
-      >
-        <planeGeometry args={[1.1, 1.48]} />
-        <meshLambertMaterial ref={pageMaterial} map={textures[1] ?? null} transparent />
-      </mesh>
+      {open && (
+        <mesh
+          position={[0, 0.138, 0]}
+          rotation-x={-Math.PI / 2}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (open && !reading) enterRealm(chapters[page].realm);
+          }}
+          receiveShadow
+        >
+          <planeGeometry args={[1.1, 1.48]} />
+          <meshLambertMaterial ref={pageMaterial} map={textures[1]} transparent color="#c6c0b0" />
+        </mesh>
+      )}
       {open && (
         <>
           <Box size={[1.14, 0.045, 1.53]} position={[-1.18, 0.022, 0]} color="#743047" />
@@ -426,7 +433,7 @@ export default function MagicalBook({
         {open && (
           <mesh position={[0.62, -0.036, 0]} rotation={[Math.PI / 2, 0, Math.PI]} receiveShadow>
             <planeGeometry args={[1.1, 1.48]} />
-            <meshLambertMaterial map={textures[0]} />
+            <meshLambertMaterial map={textures[0]} color="#c6c0b0" />
           </mesh>
         )}
         <RoundedBox args={[1.24, 0.055, 1.62]} radius={0.025} position-x={0.62}>
@@ -463,9 +470,14 @@ export default function MagicalBook({
           )),
         )}
       </group>
-      <mesh ref={sheet} geometry={geometry} position={[-0.58, 0.15, 0]} castShadow>
-        <meshLambertMaterial map={textures[1] ?? null} side={THREE.DoubleSide} />
-      </mesh>
+      {open && (
+        <mesh ref={sheet} geometry={geometry} position={[-0.58, 0.15, 0]} castShadow>
+          <meshLambertMaterial map={textures[1]} side={THREE.FrontSide} color="#c6c0b0" />
+          <mesh geometry={geometry}>
+            <meshLambertMaterial map={textures[2]} side={THREE.BackSide} color="#c6c0b0" />
+          </mesh>
+        </mesh>
+      )}
       <BookBloom open={open && bloom} reduced={reduced} />
     </group>
   );
