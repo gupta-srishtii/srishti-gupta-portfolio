@@ -4,7 +4,46 @@
 
 ---
 
-## 1. Executive Status Dashboard
+## Implementation recovery checkpoint — 18 November 2026
+
+The user's implementation mission and resume request supersede the historical no-code gate below. Historical design decisions remain preserved.
+
+- Repository: `C:\Users\gupta\OneDrive\Desktop\projects\srishti-gupta-portfolio`.
+- Recovered source is intact; both test files were zero-filled by the shutdown and have been restored.
+- Runtime and development dependencies, including Node types, are installed and locked in `package-lock.json`.
+
+| Mission milestone | Verified implementation | Remaining work |
+| --- | --- | --- |
+| 1 — Foundation | Next.js App Router, TypeScript, Tailwind, Three/Fiber/Drei; local dev server returns HTTP 200 | None for local setup |
+| 2 — Atelier | Real procedural geometry; instanced forest, roots and foliage; circular plank floor, partial canopy, braces, warm arched windows, furniture, books, easel, plants, particles and lighting | Further production art polish and real-device profiling |
+| 3 — Narrative | Skippable/session-aware five-second intro, camera approach, hinged book, bending page movement, four pages, clickable 3D portal compass, return controls | More detailed physical page artwork and richer cinematic choreography |
+| 4 — Content and gallery | All eight requested hub entries; typed verified-content schema; empty exhibitions; camera navigation and frame inspection; easel/bookshelf shortcuts | Real projects/media; specialized reading, motion, honors and gift experiences currently share the gallery foundation |
+| 5 — Mascot | Temporary burgundy human-shaped guide, curly hair, jewelry, pleated skirt; idle/wave/walk/run/turn/interact/celebrate/sit blocking poses | Custom likeness, skeletal rig, polished locomotion and cloth/hair animation |
+| 6 — Access and performance | Persistent recruiter access, keyboard/touch controls, native modal focus/Escape, command search, reduced motion, quiet SVG/HTML fallback, WebGL error boundary; limited DPR/shadows, instancing, adaptive quality, hidden-tab/modal rendering pause, listener cleanup | Screen-reader audit, physical device and cross-browser testing |
+| 7 — Verification | TypeScript, ESLint, 3 state tests, all 8 desktop/mobile browser tests and final production build pass; visual review and 3 final corrected captures complete | Physical-device, assistive-technology, Lighthouse and cross-browser audits; no launch performed |
+
+### Recovered issues fixed
+
+Restored two zero-filled test files; finished missing installations; fixed texture cleanup, camera-to-gallery handoff, hidden book illustrations, grain aliasing, quiet-mode realm selection, favicon 404 and Enter-key default activation. Reformatted source for maintainability. The private reference images were not edited or copied to public output.
+
+### Safe resume instructions
+
+1. Read this checkpoint and `docs/QA_NOTES.md`; inspect `git status` before changing files.
+2. Run `npm.cmd ci` if dependencies are missing, then `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd test`, `npm.cmd run build`.
+3. Start `npm.cmd run dev`; use `http://127.0.0.1:3000`. In another terminal run `npm.cmd run test:browser`. Edge is installed locally. Screenshots are ignored under `test-results/`.
+4. Do not assume previous processes survived. Stop an owned server with Ctrl+C before restarting it. Never run concurrent dependency installers.
+5. Add only verified work in `src/data/portfolio.ts`; copy only approved public media into `public/`. Keep raw private mascot photos in ignored `assets/mascot/references/`.
+6. Keep the custom mascot/real-content gaps explicit. Do not present MAITRI/OASIS as completed contributions. No push or deployment is authorized.
+
+Production dependencies have zero audit findings. Development tooling currently has 14 findings rooted in an unpatched picomatch advisory; see `docs/QA_NOTES.md`. Hardware 60 FPS, Lighthouse, Safari/iOS/Android and screen-reader compliance have not been established.
+
+### Git handoff
+
+Implementation commit: **`ed366e1` — `feat: build interactive woodland atelier portfolio`**. The subsequent documentation commit records this checkpoint and QA results; use `git log -2 --oneline` for its hash. Source and documentation were committed separately after successful checks. No push or deployment has been performed. Historical planning sections below are retained verbatim except for their historical heading.
+
+Final validation: `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd test` (3/3), `npm.cmd run test:browser` (8/8) and `npm.cmd run build` all pass. The browser suite checks console errors; final corrected book/portal screenshots were also captured without page errors. Screenshots: `test-results/desktop-studio-final.png`, `desktop-book-final.png`, `desktop-portals-final.png`, plus the desktop/mobile suite images. The owned development server is stopped during handoff; restart using the commands above.
+
+## 1. Historical Executive Status Dashboard
 
 - **Current Status:** **Phase 1 Complete & Formally Approved**
 - **Next Phase:** **Phase 2: Figma UI/UX Wireframing & Visual Design** *(STRICTLY NO CODE / NO WEB IMPLEMENTATION)*

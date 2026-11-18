@@ -1,6 +1,39 @@
 # 🌌 Srishti Gupta — Portfolio Universe
 ### *The Enchanted Atelier & Inventor's Arboretum*
 
+## Working implementation — 18 November 2026
+
+The repository now contains a local Next.js App Router / TypeScript / Tailwind / React Three Fiber application. The original planning documentation below is preserved as historical design context; the later implementation mission authorizes code and dependency installation.
+
+Run with Node.js 22.18 or newer (validated on Node 24):
+
+```powershell
+cd C:\Users\gupta\OneDrive\Desktop\projects\srishti-gupta-portfolio
+npm.cmd ci
+npm.cmd run dev
+```
+
+Open **http://127.0.0.1:3000**. Stop the server with Ctrl+C. For a production preview run `npm.cmd run build`, then `npm.cmd start`.
+
+Validation:
+
+```powershell
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd test
+npm.cmd run build
+# With the development server running in another terminal:
+npm.cmd run test:browser
+```
+
+Browser tests use installed Microsoft Edge on Windows; no browser download is needed. Change `channel` in `playwright.config.ts` if using another installed browser. Screenshots are saved in ignored `test-results/`.
+
+The application supports the studio → sketchbook → portals → gallery journey, direct Work/About/Resume/Contact access, keyboard page/frame navigation, Escape to return, Ctrl/⌘ K navigation, reduced motion, and a quiet HTML/SVG edition. The guide is a **temporary procedural character**, pending a custom likeness and rig.
+
+Edit **`src/data/portfolio.ts`** to add verified work and professional details. Empty exhibitions, resume, and contact are intentional. Only place approved public media in `public/`; its README explains URL paths. Never copy the raw `assets/` directory or private mascot references into `public/`.
+
+See **[the recovery and validation checkpoint](docs/PHASE_PROGRESS.md)** for milestone status, limitations, and next steps. No publication is configured or authorized.
+
 ---
 
 > **Creative Vision:** An original, cinematic digital cosmos harmonizing an enchanted ancient forest, an inventor's mechanical sketchbook, and a futuristic artist's atelier. Luminous particles drift past holographic brass armillaries, living canvas paintings breathe with subtle parallax, and floating leather-bound folios whisper of code, creativity, and craft.
