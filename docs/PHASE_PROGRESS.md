@@ -4,6 +4,37 @@
 
 ---
 
+## Cinematic visual quality pass — 19 November 2026
+
+1. The atelier has a warmer interior against cool forest light, a denser canopy, a woven rug, a painter's palette, denser desk grain and hanging pendants. The stool seat now sits horizontally.
+2. The mascot reads larger in the frame, with brow and garment details, smoother gaze and body motion, lagging curls and a jointed wave.
+3. The sketchbook seal and seam illuminate before the full reveal. Objects rise in staggered trajectories with tinted trails. Paper edges are visible, and the outgoing leaf rolls around its hinge.
+4. The interface uses editorial serif type and tighter spacing on narrow screens. The audio control has a taller hit area, and opening and turning sounds share the ambient volume and mute controls.
+
+The actual before and after images are in the ignored `test-results/` directory under `quality-before-*` and `quality-after-*`. The existing portfolio records and private references were preserved. The user authorized normal commits and a fast-forward push to `origin/main` after validation, with deployment excluded. The wardrobe, face, and environment remain stylized procedural models. None is a finished Blender sculpt or a rigged likeness.
+
+Browser review caught a blank right-hand page on hardware after lazy texture generation. The open-book materials now mount with their textures ready. The turning leaf has separately rendered front and back artwork, and the matte page finish keeps the ink visible under the desk lighting.
+
+TypeScript, ESLint, four unit tests, eight desktop/mobile browser cases and the production build passed. The four browser cases covering the book and realm navigation also passed after the final page correction. The hardware captures used local Edge at 1440 × 900 and 390 × 844. Physical phone performance is unverified.
+
+## Earlier cinematic rebuild checkpoint
+
+The latest mission replaces the five-second intro with a ten-second forest approach and moves all six creative chapters into the physical book. Do not commit, push, or deploy without approval.
+
+Current local changes: custom curved tree architecture, modeled forest foliage and roots, atmospheric shaders and fireflies, carved desk, quieter UI; new physical book with cover approach/opening, temporary object reveal, paper bending and page textures; six chapters in the requested order; six realm foundations and WASD gallery movement; original synthesized looping ambience with opt-in play/mute/volume; improved procedural curls, blinking and head tracking.
+
+Latest Figma review is **blocked**: the connector reports the Starter-plan MCP call limit, and the public link is inaccessible. No latest Figma edits have been claimed as reviewed. Blender was not found in PATH or the usual installation directory. Current geometry and animation are authored with Three.js; they remain procedural work, not final Blender assets or a production character likeness.
+
+Current validation: TypeScript, ESLint, four state-transition tests, eight updated desktop/mobile browser tests and production build pass. Browser tests cover the new book navigation, chapter order, realm walking/return, ten-second intro, audio controls and fallback. The final portrait-camera framing adjustment also passed all four targeted mobile tests and a fresh production build. See CINEMATIC_REBUILD.md for active architecture and remaining gaps. The existing localhost process should be reused if it still responds at http://127.0.0.1:3000.
+
+Final return-path refinement is also verified: entering a realm and returning preserves the selected, already-open chapter and does not replay the cover/reveal. All eight browser tests and a fresh build pass after this change. Hardware screenshots were visually reviewed. A local source-only recovery archive is saved at temp/cinematic-rebuild-checkpoint-20261118.zip; it excludes private reference photos, dependencies and build output. Nothing was staged or committed.
+
+Short hardware-accelerated Edge samples on this laptop's Intel GPU: 60.1 FPS at 1440×900 (362 draws / 158,218 triangles), 60.0 FPS at 390×844 (243 draws / 61,352 triangles). These are five-second viewport samples, not physical-phone or cross-browser guarantees. Software-only rendering remains slower: final adaptive samples were 11.6 FPS desktop and 17.3 FPS mobile. Gentle mode now reduces geometry, batches repeated plants/books, simplifies distant diffuse materials, and lowers resolution under sustained low frame rates; quiet mode remains available.
+
+Actual screenshots are in ignored test-results/: hardware-desktop-studio-final.png, hardware-desktop-bloom-final.png, hardware-desktop-book-final.png and equivalent hardware-mobile images, plus all six realm captures from the browser suite. No code was committed or staged. No push/deployment was performed. Private photos were read for character guidance and remain ignored; none were copied to public assets.
+
+Still incomplete: custom character likeness/sculpt/rig and natural skeletal locomotion; production-quality authored environment assets; full content-specific activities in all six realm foundations; real portfolio content, resume/contact details and media; physical-device and Safari/Firefox audits. Do not describe the procedural models or empty exhibitions as finished production artwork.
+
 ## Implementation recovery checkpoint — 18 November 2026
 
 The user's implementation mission and resume request supersede the historical no-code gate below. Historical design decisions remain preserved.
@@ -141,3 +172,5 @@ gantt
   - Test keyboard tab navigation, screen reader ARIA landmarks, and `prefers-reduced-motion` compliance.
   - Test across Chrome, Safari, Firefox, iOS, and Android.
   - Assist with deployment to personal domain (e.g., via Vercel, Netlify, or GitHub Pages).
+
+Final portrait visual QA: widened the foreground forest corridor so the frontal mobile camera has a clear view of the desk and sketchbook. Fresh hardware desktop/mobile captures report no page errors, and the production build passes after this correction. The guide remains close to the portrait left edge; further character/framing polish is unfinished.

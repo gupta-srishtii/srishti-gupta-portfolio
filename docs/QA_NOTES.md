@@ -1,5 +1,7 @@
 # Implementation QA — 18 November 2026
 
+This is the historical first-implementation audit. The active cinematic rebuild has a ten-second intro, six physical chapters, original ambience and new hardware-GPU measurements. Read PHASE_PROGRESS.md and CINEMATIC_REBUILD.md for current results and limits.
+
 ## Environment
 
 - Windows, Node 24.19.0, npm 11.17.0.

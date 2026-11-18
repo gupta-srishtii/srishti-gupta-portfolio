@@ -28,7 +28,9 @@ npm.cmd run test:browser
 
 Browser tests use installed Microsoft Edge on Windows; no browser download is needed. Change `channel` in `playwright.config.ts` if using another installed browser. Screenshots are saved in ignored `test-results/`.
 
-The application supports the studio → sketchbook → portals → gallery journey, direct Work/About/Resume/Contact access, keyboard page/frame navigation, Escape to return, Ctrl/⌘ K navigation, reduced motion, and a quiet HTML/SVG edition. The guide is a **temporary procedural character**, pending a custom likeness and rig.
+The current local rebuild supports a skippable ten-second forest approach, a closed burgundy book with a 3D opening/reveal, six physical chapters, and six realm foundations. Chapters run from Graphic Design through Technical Projects, Art & Hobbies, Books & Stories, Memories/Achievements/Handmade Creations, ending with Video Editing. Work/About/Resume/Contact open inside the book. Use arrows for chapters/exhibits, WASD to walk in a realm, drag to look around, Escape to return, and Ctrl/⌘ K for navigation. Original synthesized looping ambience is opt-in, with mute and volume controls. Reduced motion and a quiet HTML/SVG edition remain available.
+
+The guide is a **temporary procedural character**, with curls, blinking, breathing, gaze tracking and basic gesture/locomotion states. A custom likeness and rig remain unfinished. All realms retain explicitly empty exhibitions. Rebuild changes are **uncommitted**; no commit, push or deployment is authorized. Latest Figma edits could not be inspected because the connector reports an account tool limit. See [the cinematic rebuild checkpoint](docs/CINEMATIC_REBUILD.md).
 
 Edit **`src/data/portfolio.ts`** to add verified work and professional details. Empty exhibitions, resume, and contact are intentional. Only place approved public media in `public/`; its README explains URL paths. Never copy the raw `assets/` directory or private mascot references into `public/`.
 
