@@ -76,3 +76,7 @@ temp/
 # Personal Reference Assets & Photos (Kept local, never committed)
 assets/mascot/references/
 
+# Local browser QA output
+test-results/
+playwright-report/
+
