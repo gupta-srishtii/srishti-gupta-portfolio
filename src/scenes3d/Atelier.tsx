@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
@@ -7,6 +7,7 @@ import Studio from './world/Studio';
 import Forest from './world/Forest';
 import Atmosphere from './world/Atmosphere';
 import Realms from './world/Realms';
+import Hero from './world/Hero';
 import type { Reading } from './world/MagicalBook';
 import type { Journey } from '@/lib/journey';
 import { type MascotState, type RealmId } from '@/data/portfolio';
@@ -16,11 +17,13 @@ function CameraRig({
   reduced,
   mobile,
   bloom,
+  heroPosition,
 }: {
   journey: Journey;
   reduced: boolean;
   mobile: boolean;
   bloom: boolean;
+  heroPosition: RefObject<THREE.Vector3>;
 }) {
   const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const { camera, invalidate } = useThree();
@@ -52,15 +55,16 @@ function CameraRig({
       window.removeEventListener('blur', clear);
     };
   }, [invalidate]);
+  const heroCamera = useMemo(() => new THREE.Vector3(0.16, 2.22, mobile ? 9.15 : 8.1), [mobile]);
   const path = useMemo(
     () =>
       new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-8, 2.3, 18),
-        new THREE.Vector3(-4, 2.1, 14),
-        new THREE.Vector3(0.5, 3, 11),
-        new THREE.Vector3(5.4, 3.6, 9.8),
+        new THREE.Vector3(-7, 3.05, 18),
+        new THREE.Vector3(-3.2, 2.75, 14.7),
+        new THREE.Vector3(1.6, 2.55, 11),
+        heroCamera,
       ]),
-    [],
+    [heroCamera],
   );
   useFrame(({ clock }, dt) => {
     const v = journey.view;
@@ -70,7 +74,7 @@ function CameraRig({
       transition.current = true;
       started.current = clock.elapsedTime;
     }
-    const movable = (v === 'gallery' || v === 'studio') && journey.inspected === null;
+    const movable = v === 'gallery' && journey.inspected === null;
     if (movable && !transition.current) {
       if (v === 'gallery' && keys.current.size) {
         const forward = camera.getWorldDirection(new THREE.Vector3());
@@ -94,9 +98,11 @@ function CameraRig({
       return;
     }
     const index = journey.inspected ?? 0;
+    const elapsed = clock.elapsedTime - started.current;
+    const drift = reduced ? 0 : Math.sin(elapsed * 0.36) * 0.065;
     const pos =
       v === 'intro'
-        ? path.getPoint(Math.min(1, (clock.elapsedTime - started.current) / 10)).toArray()
+        ? path.getPoint(THREE.MathUtils.smootherstep(elapsed, 0, 9.6)).toArray()
         : v === 'book'
           ? mobile
             ? bloom && !reduced && clock.elapsedTime - started.current < 7.6
@@ -111,9 +117,7 @@ function CameraRig({
               ? journey.inspected === null
                 ? [0, 2.2, mobile ? 6.8 : 5.2]
                 : [(index - 1) * 2.8, 2.1, mobile ? 0.8 : -0.1]
-              : mobile
-                ? [1.2, 4.3, 14.5]
-                : [5.4, 3.6, 9.8];
+              : [heroCamera.x + drift + heroPosition.current.x * 0.27, heroCamera.y, heroCamera.z];
     const target =
       v === 'book'
         ? [mobile ? 0 : -0.55, 1.6, 0.55]
@@ -121,7 +125,13 @@ function CameraRig({
           ? [0.2, 2.1, 0]
           : v === 'gallery'
             ? [journey.inspected === null ? 0 : (index - 1) * 2.8, 2.1, -3.5]
-            : [0, 2.3, -1];
+            : v === 'intro'
+              ? [
+                  0.05,
+                  THREE.MathUtils.lerp(2.33, 1.53, THREE.MathUtils.smoothstep(elapsed, 3, 9)),
+                  2.65,
+                ]
+              : [heroPosition.current.x * 0.34, mobile ? 1.42 : 1.28, 2.65];
     const alpha = reduced ? 1 : 1 - Math.exp(-3 * Math.min(dt, 0.5));
     destination.set(pos[0], pos[1], pos[2]);
     aim.set(target[0], target[1], target[2]);
@@ -134,18 +144,18 @@ function CameraRig({
       if (controls.current) controls.current.enabled = true;
     } else if (controls.current) controls.current.enabled = false;
   });
-  return (journey.view === 'gallery' || journey.view === 'studio') && journey.inspected === null ? (
+  return journey.view === 'gallery' && journey.inspected === null ? (
     <OrbitControls
       ref={controls}
       makeDefault
       enabled={false}
-      target={journey.view === 'studio' ? [0, 2.3, -1] : [0, 2.1, -3.5]}
-      minDistance={journey.view === 'studio' ? 8 : 3}
-      maxDistance={journey.view === 'studio' ? 16 : 12}
+      target={[0, 2.1, -3.5]}
+      minDistance={3}
+      maxDistance={12}
       minPolarAngle={0.8}
       maxPolarAngle={1.65}
-      maxAzimuthAngle={journey.view === 'studio' ? 1.1 : 0.7}
-      minAzimuthAngle={journey.view === 'studio' ? -0.2 : -0.7}
+      maxAzimuthAngle={0.7}
+      minAzimuthAngle={-0.7}
       enablePan={false}
     />
   ) : null;
@@ -224,6 +234,8 @@ export default function Atelier({
 }) {
   const [mobile, setMobile] = useState(false);
   const [resolution, setResolution] = useState(1);
+  const heroPosition = useRef(new THREE.Vector3(0, 0, 3.2));
+  const landing = journey.view === 'studio' || journey.view === 'intro';
   const film = journey.view === 'gallery' && realm === 'motion';
   useEffect(() => {
     const query = matchMedia('(max-width: 700px)');
@@ -278,6 +290,20 @@ export default function Atelier({
         decay={2}
       />
       <pointLight position={[1.2, 2, 0]} color="#ffd190" intensity={5} distance={4} decay={2} />
+      {landing && (
+        <>
+          <pointLight position={[-1.3, 2.75, 4.8]} color="#f5c28e" intensity={9} distance={5} />
+          <pointLight position={[1.55, 2.3, 2.4]} color="#9ed1e8" intensity={5} distance={3.3} />
+          <Hero
+            active={journey.view === 'studio'}
+            mobile={mobile}
+            reduced={reduced}
+            state={mascot}
+            wave={() => setMascot('wave')}
+            position={heroPosition}
+          />
+        </>
+      )}
       <Suspense fallback={null}>
         <Forest reduced={reduced} low={low || mobile} />
         <Atmosphere reduced={reduced} low={low || mobile} />
@@ -301,6 +327,7 @@ export default function Atelier({
         reduced={reduced || Boolean(reading)}
         mobile={mobile}
         bloom={bloom}
+        heroPosition={heroPosition}
       />
     </Canvas>
   );

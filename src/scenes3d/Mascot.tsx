@@ -5,7 +5,15 @@ import * as THREE from 'three';
 import type { MascotState } from '@/data/portfolio';
 import { palette } from './Objects';
 /** Procedural blocking model, not a final portrait or rigged likeness. */
-export default function Mascot({ state, reduced }: { state: MascotState; reduced: boolean }) {
+export default function Mascot({
+  state,
+  reduced,
+  hero = false,
+}: {
+  state: MascotState;
+  reduced: boolean;
+  hero?: boolean;
+}) {
   const root = useRef<THREE.Group>(null),
     arm = useRef<THREE.Group>(null),
     head = useRef<THREE.Group>(null);
@@ -20,7 +28,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
       indices: number[] = [];
     for (let i = 0; i <= 20; i++) {
       const t = i / 20,
-        x = -0.18 + t * 0.36 + Math.sin(t * 5) * 0.025,
+        x = (-0.18 + t * 0.36 + Math.sin(t * 5) * 0.025) * (hero ? -1 : 1),
         y = 1.5 - t * 0.95,
         z = 0.15 + t * 0.16 + Math.sin(t * 6) * 0.025,
         w = 0.07 + Math.sin(t * Math.PI) * 0.025;
@@ -34,7 +42,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
     g.setIndex(indices);
     g.computeVertexNormals();
     return g;
-  }, []);
+  }, [hero]);
   const trim = useMemo(() => {
     const positions = drape.getAttribute('position');
     const edge = new THREE.CatmullRomCurve3(
@@ -101,10 +109,11 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
           : state === 'celebrate'
             ? Math.abs(Math.sin(t * 5)) * 0.14
             : Math.sin(t * 1.5) * 0.012;
-      root.current.position.x = state === 'walk' || state === 'run' ? Math.sin(t * 0.8) * 0.5 : 0;
+      root.current.position.x =
+        !hero && (state === 'walk' || state === 'run') ? Math.sin(t * 0.8) * 0.5 : 0;
       root.current.rotation.y = THREE.MathUtils.damp(
         root.current.rotation.y,
-        state === 'turn' ? 1.7 : 0.2,
+        state === 'turn' ? 1.7 : hero ? 0 : 0.2,
         4,
         dt,
       );
@@ -185,7 +194,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
       );
   });
   return (
-    <group position={[-1.83, 0.02, 0.92]} scale={1.08}>
+    <group position={hero ? [0, 0, 0] : [-1.83, 0.02, 0.92]} scale={hero ? 1.13 : 1.08}>
       <group ref={root}>
         <mesh position-y={0.63} geometry={skirt} castShadow>
           <meshStandardMaterial color={palette.burgundy} roughness={0.92} />

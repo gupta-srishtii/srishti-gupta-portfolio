@@ -288,12 +288,7 @@ export default function Experience() {
       </div>
       {journey.view === 'intro' && (
         <section className="intro" aria-label="Introduction">
-          <p className="eyebrow">A SMALL WORLD BY</p>
-          <h1>Srishti Gupta</h1>
-          <p>Code. Create. Stay curious.</p>
-          <button className="text-button" onClick={skip}>
-            Step inside <span>↗</span>
-          </button>
+          <h1 className={fallback ? undefined : 'sr-only'}>Srishti Gupta</h1>
           <div className={`intro-progress ${loaded || fallback ? 'running' : ''}`} />
           <button className="intro-skip" onClick={skip}>
             Skip intro →
@@ -302,11 +297,11 @@ export default function Experience() {
       )}
       {journey.view === 'studio' && !showIndex && (
         <>
-          <section className="scene-caption">
-            <h1>Srishti Gupta</h1>
+          <section className="scene-caption hero-caption">
+            <h1 className={loaded && !fallback ? 'sr-only' : undefined}>Srishti Gupta</h1>
             <p>A little logic. A little magic.</p>
           </section>
-          <div className="invitation">
+          <div className="invitation hero-invitation">
             <button
               className="primary"
               onClick={openBook}
@@ -315,6 +310,12 @@ export default function Experience() {
             >
               Open the sketchbook <span>↗</span>
             </button>
+            {loaded && !fallback && (
+              <p className="hero-movement-hint">
+                <span className="desktop-hint">W A S D to move</span>
+                <span className="touch-hint">Tap the rug to move</span>
+              </p>
+            )}
           </div>
         </>
       )}

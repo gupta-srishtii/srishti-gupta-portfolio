@@ -4,6 +4,14 @@
 
 ---
 
+## Scene 01 character-led landing
+
+The landing now follows a ten-second forest approach into a centered, full-length hero shot. The title is rendered behind the guide in the 3D scene, with separate portrait artwork and a semantic HTML heading. The existing guide responds to desktop WASD and taps on the rug on touch layouts. Travel stays on the atelier floor, with eased turns and a restrained camera follow. Clicking the guide plays her existing wave.
+
+All three private references were reviewed locally. The burgundy illustration governs wardrobe and accessories. The two photographs establish likeness and hair from different angles. The landing stand-in's drape now crosses from the illustrated shoulder. The production character remains unfinished. Blender was unavailable locally and the project contains no matching rigged asset. The stand-in's walking motion is an approximation and has no skeletal footfall or cloth simulation. No photos are copied into public files.
+
+The book and realms retain their existing cameras, data and interactions. Scene 01 screenshots are stored locally in the ignored `test-results/` directory as `scene01-before-*` and `scene01-after-*`.
+
 ## Cinematic visual quality pass — 19 November 2026
 
 1. The atelier has a warmer interior against cool forest light, a denser canopy, a woven rug, a painter's palette, denser desk grain and hanging pendants. The stool seat now sits horizontally.

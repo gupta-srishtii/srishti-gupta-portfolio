@@ -376,14 +376,16 @@ export default function Studio({
       </group>
       <Armillary reduced={reduced} />
       <StudioDetails />
-      <group
-        position={[0, 0, 0.45]}
-        onClick={() => setMascot('wave')}
-        onPointerOver={() => setMascot('wave')}
-        onPointerOut={() => setMascot('idle')}
-      >
-        <Mascot state={mascot} reduced={reduced} />
-      </group>
+      {journey.view !== 'intro' && journey.view !== 'studio' && (
+        <group
+          position={[0, 0, 0.45]}
+          onClick={() => setMascot('wave')}
+          onPointerOver={() => setMascot('wave')}
+          onPointerOut={() => setMascot('idle')}
+        >
+          <Mascot state={mascot} reduced={reduced} />
+        </group>
+      )}
     </group>
   );
 }
