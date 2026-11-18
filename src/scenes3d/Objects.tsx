@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, type ThreeElements } from '@react-three/fiber';
 import { Cylinder, RoundedBox, useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import { woodGrain } from './materials';
+import { leafGeometry } from './world/geometry';
 
 export const palette = {
   wood: '#6b4930',
@@ -22,7 +23,7 @@ export function Box({
   return (
     <mesh castShadow {...props} receiveShadow>
       <boxGeometry args={size} />
-      <meshStandardMaterial color={color} map={wooden ? woodGrain : null} roughness={0.85} />
+      <meshLambertMaterial color={color} map={wooden ? woodGrain : null} />
     </mesh>
   );
 }
@@ -50,10 +51,9 @@ export function Rod({
       )}
     >
       <cylinderGeometry args={[radius * 0.7, radius, d.length(), 10]} />
-      <meshStandardMaterial
+      <meshLambertMaterial
         color={color}
         map={color === palette.wood || color === palette.darkWood ? woodGrain : null}
-        roughness={0.85}
       />
     </mesh>
   );
@@ -65,33 +65,53 @@ export function Plant({
   position: [number, number, number];
   scale?: number;
 }) {
+  const leaves = useRef<THREE.InstancedMesh>(null),
+    stems = useRef<THREE.InstancedMesh>(null);
+  const shape = useMemo(() => leafGeometry(), []);
+  useEffect(() => () => shape.dispose(), [shape]);
+  useLayoutEffect(() => {
+    const dummy = new THREE.Object3D(),
+      up = new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < 9; i++) {
+      const a = i * 2.4,
+        end = new THREE.Vector3(Math.sin(a) * 0.25, 0.65 + (i % 3) * 0.13, Math.cos(a) * 0.25),
+        start = new THREE.Vector3(0, 0.3, 0),
+        direction = end.clone().sub(start);
+      dummy.position.copy(start).add(end).multiplyScalar(0.5);
+      dummy.quaternion.setFromUnitVectors(up, direction.clone().normalize());
+      dummy.scale.set(0.012, direction.length(), 0.012);
+      dummy.updateMatrix();
+      stems.current?.setMatrixAt(i, dummy.matrix);
+      dummy.position.copy(end);
+      dummy.rotation.set(-0.8, a, 0);
+      dummy.scale.set(0.65, 0.65, 0.65);
+      dummy.updateMatrix();
+      leaves.current?.setMatrixAt(i, dummy.matrix);
+      leaves.current?.setColorAt(i, new THREE.Color(i % 2 ? '#799264' : '#496c4e'));
+    }
+    if (leaves.current) {
+      leaves.current.instanceMatrix.needsUpdate = true;
+      if (leaves.current.instanceColor) leaves.current.instanceColor.needsUpdate = true;
+      leaves.current.computeBoundingSphere();
+    }
+    if (stems.current) {
+      stems.current.instanceMatrix.needsUpdate = true;
+      stems.current.computeBoundingSphere();
+    }
+  }, []);
   return (
     <group position={position} scale={scale}>
       <mesh position-y={0.2}>
         <cylinderGeometry args={[0.25, 0.17, 0.4, 12]} />
         <meshStandardMaterial color="#9f7054" />
       </mesh>
-      {Array.from({ length: 9 }, (_, i) => {
-        const a = i * 2.4;
-        return (
-          <group key={i} rotation-y={a}>
-            <Rod
-              from={[0, 0.3, 0]}
-              to={[0.25, 0.8 + (i % 3) * 0.13, 0]}
-              radius={0.012}
-              color="#64734b"
-            />
-            <mesh
-              position={[0.28, 0.8 + (i % 3) * 0.13, 0]}
-              rotation-z={-0.8}
-              scale={[0.11, 0.3, 0.04]}
-            >
-              <sphereGeometry args={[1, 8, 6]} />
-              <meshStandardMaterial color={i % 2 ? '#70835a' : '#465f41'} />
-            </mesh>
-          </group>
-        );
-      })}
+      <instancedMesh ref={leaves} args={[shape, undefined, 9]}>
+        <meshLambertMaterial color="white" side={THREE.DoubleSide} />
+      </instancedMesh>
+      <instancedMesh ref={stems} args={[undefined, undefined, 9]}>
+        <cylinderGeometry args={[0.8, 1, 1, 6]} />
+        <meshLambertMaterial color="#64734b" />
+      </instancedMesh>
     </group>
   );
 }
@@ -121,18 +141,42 @@ export function Books({
   position: [number, number, number];
   count?: number;
 }) {
+  const covers = useRef<THREE.InstancedMesh>(null),
+    bands = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      dummy.rotation.set(0, 0, i === count - 1 ? -0.16 : 0);
+      dummy.position.set(i * 0.15, 0.25, 0);
+      dummy.scale.set(0.11, 0.4 + (i % 3) * 0.07, 0.3);
+      dummy.updateMatrix();
+      covers.current?.setMatrixAt(i, dummy.matrix);
+      covers.current?.setColorAt(
+        i,
+        new THREE.Color(['#703e3c', '#496052', '#a28b60', '#57676a'][i % 4]),
+      );
+      dummy.position.set(i * 0.15, 0.12, 0);
+      dummy.scale.set(0.115, 0.025, 0.31);
+      dummy.updateMatrix();
+      bands.current?.setMatrixAt(i, dummy.matrix);
+    }
+    for (const mesh of [covers.current, bands.current])
+      if (mesh) {
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        mesh.computeBoundingSphere();
+      }
+  }, [count]);
   return (
     <group position={position}>
-      {Array.from({ length: count }, (_, i) => (
-        <group key={i} position-x={i * 0.15} rotation-z={i === count - 1 ? -0.16 : 0}>
-          <Box
-            size={[0.11, 0.4 + (i % 3) * 0.07, 0.3]}
-            position-y={0.25}
-            color={['#703e3c', '#496052', '#a28b60', '#57676a'][i % 4]}
-          />
-          <Box size={[0.115, 0.025, 0.31]} position-y={0.12} color={palette.gold} />
-        </group>
-      ))}
+      <instancedMesh ref={covers} args={[undefined, undefined, count]} castShadow>
+        <boxGeometry />
+        <meshLambertMaterial color="white" />
+      </instancedMesh>
+      <instancedMesh ref={bands} args={[undefined, undefined, count]}>
+        <boxGeometry />
+        <meshStandardMaterial color={palette.gold} roughness={0.7} />
+      </instancedMesh>
     </group>
   );
 }

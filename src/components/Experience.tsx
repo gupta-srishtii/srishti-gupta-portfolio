@@ -13,6 +13,9 @@ import {
 import { initialJourney, journeyReducer } from '@/lib/journey';
 import Modal from './Modal';
 import Fallback from './Fallback';
+import Ambience from './Ambience';
+import { chapters } from '@/data/chapters';
+import type { Reading } from '@/scenes3d/world/MagicalBook';
 const Atelier = dynamic(() => import('@/scenes3d/Atelier'), {
   ssr: false,
   loading: () => <div className="scene-loading">Gathering the woodland light…</div>,
@@ -32,29 +35,13 @@ class SceneBoundary extends Component<
     return this.state.error ? null : this.props.children;
   }
 }
-const pages = [
-  [
-    'An inventor’s sketchbook',
-    'A little logic. A little imagination.',
-    'Explore the places where code, design, and art meet.',
-  ],
-  [
-    'Think in systems',
-    'Engineering & experimentation',
-    'A space for technical projects and AI/ML explorations.',
-  ],
-  [
-    'Make with feeling',
-    'Design, motion & paint',
-    'A space for interfaces, visual stories, and creative practice.',
-  ],
-  ['Keep being curious', 'Books, craft & discovery', 'Follow a thread. See where it takes you.'],
-];
 export default function Experience() {
   const [journey, dispatch] = useReducer(journeyReducer, initialJourney);
   const [panel, setPanel] = useState<Panel>(null),
     [realm, setRealm] = useState<RealmId>('art');
   const [mascot, setMascot] = useState<MascotState>('idle');
+  const [reading, setReading] = useState<Reading>(null);
+  const [bloom, setBloom] = useState(false);
   const [reduced, setReduced] = useState(false),
     [low, setLow] = useState(false),
     [lightweight, setLightweight] = useState(false);
@@ -74,7 +61,12 @@ export default function Experience() {
     (next: Panel) => {
       skip();
       setMascot('idle');
-      setPanel(next);
+      setBloom(false);
+      if (next === 'work' || next === 'about' || next === 'resume' || next === 'contact') {
+        setReading(next === 'work' ? null : next);
+        dispatch({ type: 'open' });
+        setPanel(null);
+      } else setPanel(next);
       setCommand(false);
     },
     [skip],
@@ -112,8 +104,8 @@ export default function Experience() {
     const syncHash = () => {
       const hash = location.hash.slice(1);
       if (['work', 'about', 'resume', 'contact'].includes(hash)) {
-        dispatch({ type: 'skip' });
-        setPanel(hash as Panel);
+        dispatch({ type: 'open' });
+        setReading(hash === 'work' ? null : (hash as Reading));
       }
     };
     window.addEventListener('hashchange', syncHash);
@@ -126,7 +118,7 @@ export default function Experience() {
   useEffect(() => {
     if (journey.view !== 'intro' || supported === null || (supported && !loaded && !lightweight))
       return;
-    const timer = setTimeout(skip, 5000);
+    const timer = setTimeout(skip, 10000);
     return () => clearTimeout(timer);
   }, [journey.view, supported, loaded, lightweight, skip]);
   useEffect(() => {
@@ -167,13 +159,21 @@ export default function Experience() {
     }
   }, [mascot]);
   const openBook = () => {
+    setBloom(true);
+    setReading(null);
     skip();
     dispatch({ type: 'open' });
     setMascot('interact');
   };
   const enterRealm = (id: RealmId) => {
+    setBloom(false);
     setRealm(id);
     setPanel(null);
+    setReading(null);
+    const chapter = chapters.findIndex(
+      (item) => item.realm === id || (id === 'gifts' && item.realm === 'honors'),
+    );
+    if (chapter >= 0) dispatch({ type: 'chapter', index: chapter });
     if (id === 'about' || supported === false || lightweight) openPanel(id);
     else {
       dispatch({ type: 'gallery' });
@@ -273,6 +273,8 @@ export default function Experience() {
               enterRealm={enterRealm}
               ready={ready}
               failed={failed}
+              reading={reading}
+              bloom={bloom}
             />
           </SceneBoundary>
         )}
@@ -301,16 +303,10 @@ export default function Experience() {
       {journey.view === 'studio' && !showIndex && (
         <>
           <section className="scene-caption">
-            <p className="eyebrow">WELCOME TO MY LITTLE CORNER OF THE UNIVERSE</p>
-            <h1>
-              The enchanted
-              <br />
-              <em>atelier.</em>
-            </h1>
-            <p>A curious mind. A thousand ways to create.</p>
+            <h1>Srishti Gupta</h1>
+            <p>A little logic. A little magic.</p>
           </section>
           <div className="invitation">
-            <span className="annotation">Every idea begins with a blank page.</span>
             <button
               className="primary"
               onClick={openBook}
@@ -319,42 +315,73 @@ export default function Experience() {
             >
               Open the sketchbook <span>↗</span>
             </button>
-            <button
-              className="text-button"
-              onClick={() => {
-                skip();
-                dispatch({ type: 'portal' });
-              }}
-            >
-              Explore the worlds
-            </button>
           </div>
         </>
       )}
       {journey.view === 'book' && (
-        <section className="book-notes" aria-label="Sketchbook pages">
-          <p className="eyebrow">
-            THE INVENTOR’S NOTES / {String(journey.page + 1).padStart(2, '0')}
-          </p>
-          <h2>{pages[journey.page][0]}</h2>
-          <p className="book-subtitle">{pages[journey.page][1]}</p>
-          <p>{pages[journey.page][2]}</p>
-          <div className="page-actions">
+        <>
+          <section
+            className={fallback ? 'quiet-reading' : 'sr-only'}
+            aria-label="Sketchbook pages"
+            aria-live="polite"
+          >
+            <h2>
+              {reading
+                ? {
+                    about: 'Hello, I’m Srishti.',
+                    resume: 'The professional chapter',
+                    contact: 'Let’s create together.',
+                  }[reading]
+                : chapters[journey.page].title}
+            </h2>
+            <p>
+              {reading === 'about'
+                ? profile.bio
+                : reading === 'resume'
+                  ? 'No PDF or verified timeline has been supplied yet.'
+                  : reading === 'contact'
+                    ? 'Contact details are coming soon.'
+                    : 'An exhibition in the making. Real work and its stories will be added here.'}
+            </p>
+          </section>
+          <nav className="chapter-controls" aria-label="Book chapter navigation">
             <button
-              onClick={() => dispatch({ type: 'page', direction: -1 })}
-              aria-label="Previous page"
+              aria-label="Previous chapter"
+              onClick={() => {
+                setReading(null);
+                dispatch({ type: 'page', direction: -1 });
+              }}
             >
               ←
             </button>
-            <span>{journey.page + 1} / 4</span>
-            <button onClick={() => dispatch({ type: 'page', direction: 1 })} aria-label="Next page">
+            <span>{reading ? reading : String(journey.page + 1).padStart(2, '0') + ' / 06'}</span>
+            <button
+              aria-label="Next chapter"
+              onClick={() => {
+                setReading(null);
+                dispatch({ type: 'page', direction: 1 });
+              }}
+            >
               →
             </button>
-          </div>
-          <button className="primary" onClick={() => dispatch({ type: 'portal' })}>
-            Activate the portals ↗
-          </button>
-        </section>
+            {!reading && (
+              <button
+                className="enter-world"
+                onClick={() => enterRealm(chapters[journey.page].realm)}
+              >
+                Enter {chapters[journey.page].world} ↗
+              </button>
+            )}
+            {reading === 'resume' && profile.resume && (
+              <a href={profile.resume} download>
+                Download resume PDF ↓
+              </a>
+            )}
+            {reading === 'contact' && profile.email && (
+              <a href={'mailto:' + profile.email}>Write to Srishti ↗</a>
+            )}
+          </nav>
+        </>
       )}
       {showIndex && (
         <section className="world-index" aria-label="Portfolio world hub">
@@ -398,7 +425,6 @@ export default function Experience() {
                 {String(i + 1).padStart(2, '0')}
               </button>
             ))}
-            <button onClick={() => setPanel(realm)}>Exhibition notes ↗</button>
           </div>
           {journey.inspected !== null && (
             <aside className="inspection">
@@ -412,6 +438,16 @@ export default function Experience() {
                 <p>
                   {selected.medium} · {selected.year}
                 </p>
+              )}
+              {selected?.url && (
+                <a
+                  className="text-button"
+                  href={selected.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View work ↗
+                </a>
               )}
               <button className="text-button" onClick={() => dispatch({ type: 'back' })}>
                 Return to gallery ←
@@ -432,12 +468,15 @@ export default function Experience() {
           {journey.inspected !== null
             ? 'Gallery'
             : journey.view === 'gallery'
-              ? 'Worlds'
+              ? 'Sketchbook'
               : 'Atelier'}
         </button>
       )}
       <footer className="scene-footer">
-        <span>AN EXPLORATION IN CODE & CRAFT</span>
+        <Ambience
+          revealing={journey.view === 'book' && bloom && !reading}
+          page={journey.view === 'book' && !reading ? journey.page : null}
+        />
         <div>
           <button
             onClick={() => {
@@ -538,16 +577,18 @@ export default function Experience() {
           ) : panel === 'guide' ? (
             <>
               <p>
-                Click the sketchbook to approach it. Turn the pages, activate the portals, and
-                choose a world. In a gallery, drag to look around or select a numbered frame.
+                Open the closed sketchbook, turn its six chapters, and enter a world from the page.
+                Drag to look around or select a numbered exhibit to inspect it.
               </p>
               <p>
-                Use ← / → for pages or gallery frames. Escape goes back. Work, About, Resume, and
-                Contact are always available above. Ctrl / ⌘ K opens quick navigation.
+                Use WASD to walk in a world and ← / → for chapters or exhibits. Escape goes back.
+                Work, About, Resume, and Contact are always available above. Ctrl / ⌘ K opens quick
+                navigation.
               </p>
               <p>
                 Quiet mode offers the same navigation without WebGL. Your device’s reduced-motion
-                preference is respected. Audio is off; no sound assets are included.
+                preference is respected. The original synthesized score starts only when you choose
+                Sound on.
               </p>
               <label className="state-picker">
                 Temporary guide animation
@@ -562,6 +603,16 @@ export default function Experience() {
               <p className="fine-print">
                 Procedural guide animations are blocking poses, pending a custom rig.
               </p>
+              <button
+                className="text-button"
+                onClick={() => {
+                  setPanel(null);
+                  setReading(null);
+                  dispatch({ type: 'replay' });
+                }}
+              >
+                Replay the opening
+              </button>
             </>
           ) : (
             <>

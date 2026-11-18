@@ -92,6 +92,8 @@ export const profile = {
   experience: [] as { organization: string; role: string; period: string }[],
 };
 export function gallerySlots(realm: RealmId) {
-  const works = entries.filter((entry) => entry.realm === realm);
+  const works = entries.filter(
+    (entry) => entry.realm === realm || (realm === 'honors' && entry.realm === 'gifts'),
+  );
   return works.length ? works : [null, null, null];
 }

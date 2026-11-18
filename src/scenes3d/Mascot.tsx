@@ -1,15 +1,83 @@
 'use client';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MascotState } from '@/data/portfolio';
-import { Box, palette } from './Objects';
+import { palette } from './Objects';
 /** Procedural blocking model, not a final portrait or rigged likeness. */
 export default function Mascot({ state, reduced }: { state: MascotState; reduced: boolean }) {
   const root = useRef<THREE.Group>(null),
     arm = useRef<THREE.Group>(null),
     head = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
+  const rightElbow = useRef<THREE.Group>(null);
+  const hair = useRef<THREE.Group>(null);
+  const eyes = useRef<THREE.Group>(null);
+  const pupils = useRef<(THREE.Mesh | null)[]>([]);
+  const drape = useMemo(() => {
+    const g = new THREE.BufferGeometry(),
+      vertices: number[] = [],
+      indices: number[] = [];
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20,
+        x = -0.18 + t * 0.36 + Math.sin(t * 5) * 0.025,
+        y = 1.5 - t * 0.95,
+        z = 0.15 + t * 0.16 + Math.sin(t * 6) * 0.025,
+        w = 0.07 + Math.sin(t * Math.PI) * 0.025;
+      vertices.push(x - w, y, z, x + w, y, z + 0.015);
+      if (i < 20) {
+        const a = i * 2;
+        indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      }
+    }
+    g.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }, []);
+  const trim = useMemo(() => {
+    const positions = drape.getAttribute('position');
+    const edge = new THREE.CatmullRomCurve3(
+      Array.from({ length: 21 }, (_, i) =>
+        new THREE.Vector3().fromBufferAttribute(positions, i * 2 + 1),
+      ),
+    );
+    return new THREE.TubeGeometry(edge, 28, 0.005, 5);
+  }, [drape]);
+  useEffect(
+    () => () => {
+      drape.dispose();
+      trim.dispose();
+    },
+    [drape, trim],
+  );
+  const curls = useMemo(
+    () =>
+      Array.from({ length: 26 }, (_, i) => {
+        const a = (i / 26) * Math.PI * 2,
+          front = Math.cos(a) > 0.6,
+          length = front ? 0.14 : 0.48 + (i % 4) * 0.045;
+        const curve = new THREE.CatmullRomCurve3(
+          Array.from({ length: 35 }, (_, j) => {
+            const t = j / 34,
+              spiral = t * Math.PI * 2 * (front ? 1.3 : 3.5);
+            return new THREE.Vector3(
+              Math.sin(a) * 0.18 + Math.cos(spiral) * 0.022 + Math.sin(a) * t * 0.07,
+              0.14 - t * length,
+              Math.cos(a) * 0.14 + Math.sin(spiral) * 0.023 - (front ? 0 : t * 0.03),
+            );
+          }),
+        );
+        return new THREE.TubeGeometry(curve, 36, 0.019, 5, false);
+      }),
+    [],
+  );
+  useEffect(
+    () => () => {
+      curls.forEach((g) => g.dispose());
+    },
+    [curls],
+  );
   const skirt = useMemo(() => {
     const geometry = new THREE.CylinderGeometry(0.16, 0.46, 1.12, 48, 6);
     const positions = geometry.attributes.position;
@@ -23,6 +91,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
     geometry.computeVertexNormals();
     return geometry;
   }, []);
+  useEffect(() => () => skirt.dispose(), [skirt]);
   useFrame(({ clock, pointer }, dt) => {
     const t = reduced ? 0 : clock.elapsedTime;
     if (root.current) {
@@ -35,12 +104,57 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
       root.current.position.x = state === 'walk' || state === 'run' ? Math.sin(t * 0.8) * 0.5 : 0;
       root.current.rotation.y = THREE.MathUtils.damp(
         root.current.rotation.y,
-        state === 'turn' ? 1.7 : -0.25,
+        state === 'turn' ? 1.7 : 0.2,
         4,
         dt,
       );
+      root.current.rotation.z = reduced ? 0 : 0.025 * Math.sin(t * 1.2);
     }
-    if (head.current) head.current.rotation.y = reduced ? 0 : pointer.x * 0.2;
+    if (head.current) {
+      head.current.rotation.y = reduced
+        ? 0
+        : THREE.MathUtils.damp(
+            head.current.rotation.y,
+            pointer.x * 0.28 + Math.sin(t * 0.8) * 0.07,
+            4,
+            dt,
+          );
+      head.current.rotation.x = reduced
+        ? 0
+        : THREE.MathUtils.damp(
+            head.current.rotation.x,
+            -pointer.y * 0.1 + (state === 'interact' ? 0.13 : 0),
+            5,
+            dt,
+          );
+      head.current.rotation.z = reduced ? 0 : Math.sin(t * 1.3) * 0.035;
+    }
+    if (hair.current) hair.current.rotation.z = Math.sin(t * 1.3 - 0.5) * (reduced ? 0 : 0.022);
+    if (rightElbow.current) {
+      rightElbow.current.rotation.z = THREE.MathUtils.damp(
+        rightElbow.current.rotation.z,
+        state === 'wave' ? -1.04 + Math.sin(t * 8) * (reduced ? 0 : 0.31) : -0.1,
+        7,
+        dt,
+      );
+    }
+    if (eyes.current) {
+      const blink = t % 4.6;
+      eyes.current.scale.y = reduced
+        ? 1
+        : blink > 4.3
+          ? Math.max(0.08, Math.abs(blink - 4.45) / 0.15)
+          : 1;
+    }
+    pupils.current.forEach((pupil, i) => {
+      if (pupil)
+        pupil.position.set(
+          (i === 0 ? -0.073 : 0.073) + (reduced ? 0 : pointer.x * 0.007),
+          0.02 + (reduced ? 0 : pointer.y * 0.004),
+          0.173,
+        );
+    });
+    if (root.current) root.current.scale.y = 1 + Math.sin(t * 1.8) * 0.004;
     if (leftArm.current)
       leftArm.current.rotation.z = THREE.MathUtils.damp(
         leftArm.current.rotation.z,
@@ -58,7 +172,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
       arm.current.rotation.z = THREE.MathUtils.damp(
         arm.current.rotation.z,
         state === 'wave'
-          ? -2.3 + Math.sin(t * 7) * 0.25
+          ? -1.44 + Math.sin(t * 4) * 0.12
           : state === 'interact'
             ? -1.2
             : state === 'celebrate'
@@ -71,7 +185,7 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
       );
   });
   return (
-    <group position={[-2.05, 0.16, 0.5]} scale={0.95}>
+    <group position={[-1.83, 0.02, 0.92]} scale={1.08}>
       <group ref={root}>
         <mesh position-y={0.63} geometry={skirt} castShadow>
           <meshStandardMaterial color={palette.burgundy} roughness={0.92} />
@@ -84,38 +198,72 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
           <sphereGeometry args={[1, 16, 12]} />
           <meshStandardMaterial color={palette.burgundy} />
         </mesh>
-        <Box
-          size={[0.14, 0.68, 0.03]}
-          position={[-0.1, 1.13, 0.15]}
-          rotation-z={-0.3}
-          color="#a25460"
-        />
-        <Box
-          size={[0.008, 0.68, 0.035]}
-          position={[-0.17, 1.11, 0.15]}
-          rotation-z={-0.3}
-          color={palette.gold}
-        />
+        <mesh geometry={drape}>
+          <meshStandardMaterial color="#864251" roughness={0.86} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh geometry={trim}>
+          <meshStandardMaterial color="#d8aa69" roughness={0.59} metalness={0.24} />
+        </mesh>
         <mesh position-y={1.64}>
           <cylinderGeometry args={[0.07, 0.08, 0.15, 12]} />
           <meshStandardMaterial color="#ad7958" />
         </mesh>
-        <group ref={head} position={[0, 1.86, 0]}>
-          <mesh scale={[0.185, 0.24, 0.18]}>
-            <sphereGeometry args={[1, 20, 16]} />
+        <group ref={head} position={[0, 1.86, 0]} scale={0.86}>
+          <mesh scale={[0.183, 0.227, 0.178]}>
+            <sphereGeometry args={[1, 32, 24]} />
             <meshStandardMaterial color="#b78463" />
           </mesh>
+          <group ref={eyes}>
+            {[-1, 1].map((s, i) => (
+              <group key={s}>
+                <mesh
+                  position={[s * 0.076, 0.055, 0.162]}
+                  rotation-z={s * -0.11}
+                  scale={[0.039, 0.0055, 0.008]}
+                >
+                  <sphereGeometry args={[1, 12, 8]} />
+                  <meshStandardMaterial color="#30221f" />
+                </mesh>
+                <mesh
+                  position={[s * 0.076, 0.021, 0.158]}
+                  rotation-z={s * 0.12}
+                  scale={[0.043, 0.021, 0.016]}
+                >
+                  <sphereGeometry args={[1, 14, 10]} />
+                  <meshStandardMaterial color="#372624" />
+                </mesh>
+                <mesh position={[s * 0.073, 0.02, 0.159]} scale={[0.037, 0.018, 0.015]}>
+                  <sphereGeometry args={[1, 10, 8]} />
+                  <meshStandardMaterial color="#d5c3a4" />
+                </mesh>
+                <mesh
+                  ref={(node) => {
+                    pupils.current[i] = node;
+                  }}
+                  position={[s * 0.073, 0.02, 0.173]}
+                  scale={[0.013, 0.016, 0.008]}
+                >
+                  <sphereGeometry args={[1, 12, 8]} />
+                  <meshStandardMaterial color="#30231e" />
+                </mesh>
+              </group>
+            ))}
+          </group>
           {[-1, 1].map((s) => (
-            <group key={s}>
-              <mesh position={[s * 0.073, 0.02, 0.159]} scale={[0.037, 0.018, 0.015]}>
-                <sphereGeometry args={[1, 10, 8]} />
-                <meshStandardMaterial color="#29221e" />
-              </mesh>
-              <mesh position={[s * 0.18, -0.1, 0.015]}>
-                <sphereGeometry args={[0.028, 8, 8]} />
-                <meshStandardMaterial color={palette.gold} metalness={0.7} roughness={0.4} />
-              </mesh>
-            </group>
+            <mesh key={s} position={[s * 0.185, -0.11, 0.015]}>
+              <latheGeometry
+                args={[
+                  [
+                    new THREE.Vector2(0.008, 0),
+                    new THREE.Vector2(0.029, 0.006),
+                    new THREE.Vector2(0.015, 0.03),
+                    new THREE.Vector2(0.008, 0.05),
+                  ],
+                  12,
+                ]}
+              />
+              <meshStandardMaterial color={palette.gold} metalness={0.7} roughness={0.35} />
+            </mesh>
           ))}
           <mesh position={[0, -0.095, 0.168]} scale={[0.045, 0.012, 0.01]}>
             <sphereGeometry args={[1, 10, 6]} />
@@ -129,23 +277,17 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
             <sphereGeometry args={[0.01, 8, 6]} />
             <meshStandardMaterial color={palette.burgundy} />
           </mesh>
-          {Array.from({ length: 30 }, (_, i) => {
-            const a = i * 2.4;
-            return (
-              <mesh
-                key={i}
-                position={[
-                  Math.sin(a) * (i < 12 ? 0.17 : 0.21),
-                  i < 12 ? 0.13 + Math.cos(a) * 0.09 : 0.05 - (i - 12) * 0.024,
-                  i < 12 ? Math.cos(a) * 0.13 : -0.09 + Math.cos(a) * 0.1,
-                ]}
-                scale={[0.07, 0.09, 0.07]}
-              >
-                <sphereGeometry args={[1, 8, 6]} />
-                <meshStandardMaterial color="#211d1b" roughness={1} />
+          <mesh position={[0, 0.06, -0.02]} scale={[1, 1.15, 1]}>
+            <sphereGeometry args={[0.197, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52]} />
+            <meshStandardMaterial color="#241d1b" roughness={1} />
+          </mesh>
+          <group ref={hair}>
+            {curls.map((g, i) => (
+              <mesh key={i} geometry={g}>
+                <meshStandardMaterial color={i % 3 ? '#271e1c' : '#41302a'} roughness={0.58} />
               </mesh>
-            );
-          })}
+            ))}
+          </group>
         </group>
         {[-1, 1].map((s) => (
           <group
@@ -158,7 +300,11 @@ export default function Mascot({ state, reduced }: { state: MascotState; reduced
               <capsuleGeometry args={[0.052, 0.2, 4, 10]} />
               <meshStandardMaterial color="#b78463" />
             </mesh>
-            <group position={[0, -0.29, 0]} rotation-x={-0.2}>
+            <group
+              ref={s === 1 ? rightElbow : undefined}
+              position={[0, -0.29, 0]}
+              rotation-x={-0.24}
+            >
               <mesh position-y={-0.1}>
                 <capsuleGeometry args={[0.043, 0.16, 4, 10]} />
                 <meshStandardMaterial color="#b78463" />

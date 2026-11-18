@@ -2,14 +2,19 @@ import * as THREE from 'three';
 
 // Small deterministic textures: no external downloads or private source assets.
 function grain(bark: boolean) {
-  const size = 128,
+  const size = 256,
     pixels = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y++)
     for (let x = 0; x < size; x++) {
       const n = Math.sin(x * 13.13 + y * 37.7) * 43758.545;
       const noise = n - Math.floor(n);
-      const wave = Math.sin((bark ? x : y) * 0.7 + Math.sin((bark ? y : x) * 0.05) * 1.7);
-      const value = Math.round(220 + wave * (bark ? 17 : 9) + noise * 9);
+      const across = ((bark ? x : y) / size) * Math.PI * 2;
+      const along = ((bark ? y : x) / size) * Math.PI * 2;
+      const warp = Math.sin(along + 3 * across) * 0.19 + Math.sin(along * 2 - across) * 0.08;
+      const fiber = across + warp;
+      const rings = Math.sin(fiber * 19 + Math.sin(across * 5) * 1.2);
+      const pores = Math.pow(Math.max(0, Math.sin(fiber * 53)), 8);
+      const value = Math.round(214 + rings * (bark ? 23 : 14) - pores * 22 + noise * 13);
       const offset = (y * size + x) * 4;
       pixels[offset] = value;
       pixels[offset + 1] = value;

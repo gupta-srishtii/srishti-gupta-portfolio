@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './cinematic.css';
 export const metadata: Metadata = {
   title: 'Srishti Gupta — The Enchanted Atelier',
   description:

@@ -1,83 +1,136 @@
 import { test, expect } from '@playwright/test';
-test('sketchbook, gallery, recruiter access, and quiet edition', async ({ page }, info) => {
+
+test('six physical chapters enter distinct worlds and return to the book', async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text());
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Skip intro' }).click();
   await expect(page.locator('canvas')).toBeVisible();
-  await page.waitForTimeout(2400);
-  await page.screenshot({ path: `test-results/${info.project.name}-atelier.png` });
+  await expect
+    .poll(async () => Number(await page.locator('canvas').getAttribute('data-draw-calls')), {
+      timeout: 20_000,
+    })
+    .toBeGreaterThan(20);
+  await page.screenshot({ path: 'test-results/' + info.project.name + '-atelier.png' });
   await page.getByRole('button', { name: 'Open the sketchbook' }).click();
-  await expect(page.getByRole('heading', { name: 'An inventor’s sketchbook' })).toBeVisible();
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `test-results/${info.project.name}-book.png` });
-  await page.getByRole('button', { name: 'Next page' }).click();
-  await expect(page.getByRole('heading', { name: 'Think in systems' })).toBeVisible();
-  await page.getByRole('button', { name: 'Activate the portals' }).click();
-  await page.screenshot({ path: `test-results/${info.project.name}-portals.png` });
-  await page.getByRole('button', { name: /04 Painting/ }).click();
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `test-results/${info.project.name}-gallery-wide.png` });
-  await page.getByRole('button', { name: 'Inspect empty frame 1', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Curating this exhibition' })).toBeVisible();
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `test-results/${info.project.name}-gallery.png` });
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('heading', { name: 'Curating this exhibition' })).not.toBeVisible();
-  await page.getByRole('link', { name: 'Resume', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('No PDF');
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Field guide' }).click();
-  for (const state of ['idle', 'wave', 'walk', 'run', 'turn', 'interact', 'celebrate', 'sit']) {
-    await page.getByLabel('Temporary guide animation').selectOption(state);
+  const chapters = [
+    'Graphic Design',
+    'Technical Projects',
+    'Art & Hobbies',
+    'Books & Stories',
+    'Memories, Achievements & Handmade Creations',
+    'Video Editing',
+  ];
+  const worlds = [
+    'The design gallery',
+    'The invention lab',
+    'The painter’s greenhouse',
+    'The book tree',
+    'The keepsake archive',
+    'The film room',
+  ];
+  for (let i = 0; i < chapters.length; i++) {
+    await expect(page.getByRole('heading', { name: chapters[i], exact: true })).toBeAttached();
+    if (i === 0) await page.screenshot({ path: 'test-results/' + info.project.name + '-book.png' });
+    await page.getByRole('button', { name: 'Enter ' + worlds[i] + ' ↗', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Inspect empty frame 1', exact: true }),
+    ).toBeVisible();
+    await page.screenshot({ path: 'test-results/' + info.project.name + '-realm-' + i + '.png' });
+    if (i === 0) {
+      const before = await page.locator('canvas').getAttribute('data-camera');
+      await page.keyboard.down('w');
+      await page.waitForTimeout(350);
+      await page.keyboard.up('w');
+      await expect.poll(() => page.locator('canvas').getAttribute('data-camera')).not.toBe(before);
+      await page.getByRole('button', { name: 'Inspect empty frame 1', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Curating this exhibition' })).toBeVisible();
+      await page.keyboard.press('Escape');
+    }
+    await page.getByRole('button', { name: '← Sketchbook' }).click();
+    await expect(page.getByRole('heading', { name: chapters[i], exact: true })).toBeAttached();
+    if (i < 5) await page.getByRole('button', { name: 'Next chapter' }).click();
   }
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Quiet mode' }).click();
-  await expect(page.getByRole('heading', { name: 'Choose a world.' })).toBeVisible();
-  await page.getByRole('link', { name: 'Contact', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Contact details are coming soon');
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /01 Engineering/ }).click();
-  await expect(page.getByRole('dialog')).toContainText('Curating this exhibition');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
-test('reduced motion and WebGL fallback preserve direct navigation', async ({ page }) => {
+
+test('animated cover reveal, page turn, professional pages and original audio', async ({
+  page,
+}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip intro' }).click();
+  await page.getByRole('button', { name: 'Open the sketchbook' }).click();
+  await page.waitForTimeout(3200);
+  await page.screenshot({ path: 'test-results/' + info.project.name + '-reveal.png' });
+  await page.waitForTimeout(4700);
+  await page.screenshot({ path: 'test-results/' + info.project.name + '-open-book.png' });
+  await page.getByRole('button', { name: 'Next chapter' }).click();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/' + info.project.name + '-page-turn.png' });
+  await expect(
+    page.getByRole('heading', { name: 'Technical Projects', exact: true }),
+  ).toBeAttached();
+  await page.getByRole('button', { name: 'Enter The invention lab ↗', exact: true }).click();
+  await page.getByRole('button', { name: '← Sketchbook' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Technical Projects', exact: true }),
+  ).toBeAttached();
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'test-results/' + info.project.name + '-returned-book.png' });
+  for (const [link, text] of [
+    ['About', 'I explore graphic design'],
+    ['Resume', 'No PDF'],
+    ['Contact', 'Contact details are coming soon'],
+  ]) {
+    await page.getByRole('link', { name: link, exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Sketchbook pages' })).toContainText(text);
+  }
+  await page.getByRole('button', { name: 'Play ambient music' }).click();
+  await expect(page.getByRole('button', { name: 'Mute ambient music' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByLabel('Ambient volume').focus();
+  await page.getByLabel('Ambient volume').press('Home');
+  await expect(page.getByLabel('Ambient volume')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Mute ambient music' }).click();
+  await expect(page.getByRole('button', { name: 'Play ambient music' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('WebGL fallback and command search retain professional access', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null;
   });
   await page.goto('/#about');
-  await expect(page.getByRole('dialog')).toContainText('CSE AI/ML student');
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('heading', { name: 'Choose a world.' })).toBeVisible();
-  await page.getByRole('link', { name: 'Work', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('0 curated works');
-  await page.keyboard.press('Escape');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-test('returning visitors and command navigation bypass the intro', async ({ page }) => {
-  await page.addInitScript(() => sessionStorage.setItem('srishti_intro_seen', 'true'));
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Skip intro' })).not.toBeVisible();
+  await expect(page.getByRole('region', { name: 'Sketchbook pages' })).toContainText(
+    'I explore graphic design',
+  );
   await page.keyboard.press('Control+k');
   await page.getByLabel('Find a chapter').fill('resume');
   await page.getByLabel('Find a chapter').press('Enter');
-  await expect(page.getByRole('dialog')).toContainText('No PDF');
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Open the sketchbook' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Sketchbook pages' })).toContainText('No PDF');
+  await page.getByRole('link', { name: 'Work', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Graphic Design', exact: true })).toBeVisible();
 });
-test('the five-second intro completes and is remembered', async ({ page }) => {
+
+test('ten-second opening is skippable and remembered', async ({ page }) => {
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null;
   });
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Skip intro' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Choose a world.' })).toBeVisible({
-    timeout: 9000,
+    timeout: 15000,
   });
   expect(await page.evaluate(() => sessionStorage.getItem('srishti_intro_seen'))).toBe('true');
   await page.reload();
