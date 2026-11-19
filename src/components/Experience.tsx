@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { Component, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   entries,
+  emptyExhibitLabel,
   gallerySlots,
   profile,
   realms,
@@ -53,7 +54,7 @@ export default function Experience() {
   const [spell, setSpell] = useState<{ target: CastTarget; scope: Journey } | null>(null);
   const castId = useRef(0);
   const castTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(castTimer.current), [journey.view, realm]);
+  useEffect(() => () => window.clearTimeout(castTimer.current), [journey, realm]);
   const skip = useCallback(() => {
     dispatch({ type: 'skip' });
     try {
@@ -202,8 +203,8 @@ export default function Experience() {
     }, 440);
   };
   const castBook = () => castAt([0.86, 1.35, 0.65], openBook);
-  const castExhibit = (index: number) =>
-    castAt([(index - 1) * 2.8, realm === 'motion' ? 1.5 : 2.1, -3.45], () =>
+  const castExhibit = (index: number, at?: CastTarget['at']) =>
+    castAt(at ?? [(index - 1) * 2.8, realm === 'motion' ? 1.5 : 2.1, -3.45], () =>
       dispatch({ type: 'inspect', index }),
     );
   const castPortal = (target: RealmId) => castAt([0.31, 1.72, 0.55], () => enterRealm(target));
@@ -461,12 +462,10 @@ export default function Experience() {
               <h2>{selected?.title ?? 'Curating this exhibition'}</h2>
               <p>
                 {selected?.description ??
-                  'This frame is reserved for real work. No artwork has been added yet.'}
+                  `This space is reserved for ${emptyExhibitLabel(realm, journey.inspected).toLowerCase()}. It is waiting for an approved entry.`}
               </p>
               {selected?.medium && (
-                <p>
-                  {selected.medium} · {selected.year}
-                </p>
+                <p>{[selected.medium, selected.year].filter(Boolean).join(' · ')}</p>
               )}
               {selected?.url && (
                 <a
@@ -475,8 +474,29 @@ export default function Experience() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View work ↗
+                  {selected.realm === 'code' ? 'Repository ↗' : 'View work ↗'}
                 </a>
+              )}
+              {selected?.technologies?.length ? <p>{selected.technologies.join(' · ')}</p> : null}
+              {selected?.sourceLinks?.map((link) => (
+                <a
+                  key={link.url}
+                  className="text-button"
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {link.label} ↗
+                </a>
+              ))}
+              {selected?.video && (
+                <video
+                  className="exhibit-video"
+                  src={selected.video}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
               )}
               <button className="text-button" onClick={() => dispatch({ type: 'back' })}>
                 Return to gallery ←

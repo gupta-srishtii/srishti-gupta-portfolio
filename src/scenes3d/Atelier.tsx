@@ -250,7 +250,7 @@ export default function Atelier({
   paused: boolean;
   downgrade: () => void;
   openBook: () => void;
-  inspect: (i: number) => void;
+  inspect: (i: number, at?: [number, number, number]) => void;
   enterRealm: (realm: RealmId) => void;
   ready: () => void;
   failed: () => void;
@@ -345,7 +345,12 @@ export default function Atelier({
         <Atmosphere reduced={reduced} low={low || mobile} />
         {!landing &&
           (journey.view === 'gallery' ? (
-            <Realms realm={realm} inspect={inspect} reduced={reduced} />
+            <Realms
+              realm={realm}
+              inspect={inspect}
+              inspected={journey.inspected}
+              reduced={reduced}
+            />
           ) : (
             <Studio
               journey={journey}

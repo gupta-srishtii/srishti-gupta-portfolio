@@ -1,0 +1,15 @@
+﻿# Portfolio project audit
+
+The public repository inventory, default-branch trees, available READMEs, recent commit history, relevant source files, and declared demo URLs were checked before selecting an exhibit. Commit attribution was checked using GitHub's associated account when present. Repository custody alone is insufficient to verify contributions.
+
+| Repositories | Evidence and disposition |
+|---|---|
+| [area-and-volume](https://github.com/gupta-srishtii/area-and-volume) and [CM-PBL](https://github.com/gupta-srishtii/CM-PBL) | Same academic numerical integration problem, methods, measured-data mode, and C++ module layout. Two current file blobs match exactly and the implementations have diverged. Use one Numerical Area & Volume Calculator exhibit. The canonical repository contains commits attributed to Srishti's GitHub account, while CM-PBL is a related fork with commits attributed to a different account. Link the fork as related source and make no sole-author claim. No demo is declared. |
+| [hackerthon1](https://github.com/gupta-srishtii/hackerthon1), [demo](https://github.com/gupta-srishtii/demo), and [S](https://github.com/gupta-srishtii/S) | Demo and hackerthon1 share 18 file blobs plus the MediaPipe dance-learning assets and purpose. The hackerthon1 and S HTML titles and both live page titles identify Kaladrishti. Both declared URLs responded with HTTP 200. S has a commit attributed to Srishti, while the checked histories of demo and hackerthon1 are attributed to a different account. Flag as one related group for contribution review. No exhibit or demo link is published. |
+| [frontend](https://github.com/gupta-srishtii/frontend) and [ofr](https://github.com/gupta-srishtii/ofr) | Both landing sources name Oasis or OASIS. No matching current blobs were found. Their workflows and scope may differ, so they remain a possible relationship for review. Neither is presented as Srishti's project. |
+| [meoww-f](https://github.com/gupta-srishtii/meoww-f) | History explicitly identifies MAITRI. Excluded pending verified contribution details. |
+| [meowwww](https://github.com/gupta-srishtii/meowwww) | The README identifies a distinct personal 3D memory project with private media. Similar naming to meoww-f and shared TypeScript do not establish duplication. Held for review before any public portfolio inclusion. |
+| [JOC](https://github.com/gupta-srishtii/JOC) | Fork of a system monitoring project. The sampled commits are attributed to other accounts. No verified contribution in the reviewed material. |
+| [design-portfolio](https://github.com/gupta-srishtii/design-portfolio) and this site | GitHub returned an empty repository conflict for design-portfolio. The active portfolio is the host of these exhibits. Neither is a separate exhibit. |
+
+No verified graph or maze project was identified in the reviewed public inventory. Graphic Design, UI/UX, and Painting await intentionally supplied assets. Books, achievements, keepsakes, and video editing also await approved records or media. No unrelated projects were merged solely because they use the same framework.

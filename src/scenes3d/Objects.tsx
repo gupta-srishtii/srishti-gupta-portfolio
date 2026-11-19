@@ -208,6 +208,10 @@ export function Frame({
       loaded.dispose();
     };
   }, [image]);
+  const picture = texture?.image as { width?: number; height?: number } | undefined;
+  const ratio = picture?.width && picture.height ? picture.width / picture.height : 1.25 / 1.65;
+  const printWidth = Math.min(1.25, 1.65 * ratio);
+  const printHeight = Math.min(1.65, 1.25 / ratio);
   return (
     <group
       position={position}
@@ -225,8 +229,12 @@ export function Frame({
       <Box size={[1.55, 1.95, 0.1]} color={hover ? '#e0c47f' : palette.gold} />
       <Box size={[1.4, 1.8, 0.12]} position-z={0.02} color={palette.darkWood} />
       <mesh position-z={0.09}>
-        <planeGeometry args={[1.25, 1.65]} />
-        <meshStandardMaterial color={texture ? '#ffffff' : color} map={texture} roughness={0.95} />
+        <planeGeometry args={[printWidth, printHeight]} />
+        {texture ? (
+          <meshBasicMaterial map={texture} toneMapped={false} />
+        ) : (
+          <meshStandardMaterial color={color} roughness={0.95} />
+        )}
       </mesh>
       {!image && (
         <group position-z={0.1}>

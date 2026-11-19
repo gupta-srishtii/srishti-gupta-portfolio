@@ -78,10 +78,26 @@ export interface PortfolioEntry {
   medium?: string;
   year?: number;
   image?: string;
+  video?: string;
   url?: string;
+  sourceLinks?: { label: string; url: string }[];
   technologies?: string[];
 }
-export const entries: PortfolioEntry[] = [];
+export const entries: PortfolioEntry[] = [
+  {
+    id: 'numerical-area-volume',
+    realm: 'code',
+    title: 'Numerical Area & Volume Calculator',
+    description:
+      'A Computational Methods project for estimating signed area under a curve and the volume of a solid of revolution. Compare composite trapezoidal, Simpson’s 1/3, and Simpson’s 3/8 rules using built-in functions or equally spaced measurements. The repository includes browser and C++ terminal versions.',
+    medium: 'Academic project',
+    technologies: ['C++17', 'JavaScript', 'HTML', 'CSS'],
+    url: 'https://github.com/gupta-srishtii/area-and-volume',
+    sourceLinks: [
+      { label: 'Related CM-PBL fork', url: 'https://github.com/gupta-srishtii/CM-PBL' },
+    ],
+  },
+];
 export const profile = {
   name: 'Srishti Gupta',
   title: 'CSE AI/ML student · multidisciplinary creative',
@@ -95,5 +111,13 @@ export function gallerySlots(realm: RealmId) {
   const works = entries.filter(
     (entry) => entry.realm === realm || (realm === 'honors' && entry.realm === 'gifts'),
   );
-  return works.length ? works : [null, null, null];
+  return [...works, ...Array<null>(Math.max(0, 3 - works.length)).fill(null)];
+}
+export function emptyExhibitLabel(realm: RealmId, index: number) {
+  if (realm === 'design') return index === 1 ? 'UI/UX case study' : 'Graphic design';
+  if (realm === 'art') return 'Painting';
+  if (realm === 'code') return 'Technical project';
+  if (realm === 'books') return 'Book or story';
+  if (realm === 'motion') return 'Film exhibit';
+  return 'Keepsake';
 }

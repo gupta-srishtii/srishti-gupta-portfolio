@@ -60,7 +60,10 @@ test('six physical chapters enter distinct worlds and return to the book', async
     if (i === 0) await page.screenshot({ path: 'test-results/' + info.project.name + '-book.png' });
     await page.getByRole('button', { name: 'Enter ' + worlds[i] + ' ↗', exact: true }).click();
     await expect(
-      page.getByRole('button', { name: 'Inspect empty frame 1', exact: true }),
+      page.getByRole('button', {
+        name: i === 1 ? 'Inspect Numerical Area & Volume Calculator' : 'Inspect empty frame 1',
+        exact: true,
+      }),
     ).toBeVisible();
     await page.screenshot({ path: 'test-results/' + info.project.name + '-realm-' + i + '.png' });
     if (i === 0) {
@@ -71,6 +74,21 @@ test('six physical chapters enter distinct worlds and return to the book', async
       await expect.poll(() => page.locator('canvas').getAttribute('data-camera')).not.toBe(before);
       await page.getByRole('button', { name: 'Inspect empty frame 1', exact: true }).click();
       await expect(page.getByRole('heading', { name: 'Curating this exhibition' })).toBeVisible();
+      await page.keyboard.press('Escape');
+    }
+    if (i === 1) {
+      await page
+        .getByRole('button', { name: 'Inspect Numerical Area & Volume Calculator' })
+        .click();
+      const details = page.locator('.inspection');
+      await expect(details.getByRole('link', { name: 'Repository' })).toHaveAttribute(
+        'href',
+        'https://github.com/gupta-srishtii/area-and-volume',
+      );
+      await expect(details.getByRole('link', { name: /related CM-PBL fork/i })).toHaveAttribute(
+        'href',
+        'https://github.com/gupta-srishtii/CM-PBL',
+      );
       await page.keyboard.press('Escape');
     }
     await page.getByRole('button', { name: '← Sketchbook' }).click();

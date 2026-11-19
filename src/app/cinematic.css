@@ -235,6 +235,14 @@
 .inspection p {
   font-size: 12px;
 }
+.inspection .text-button {
+  display: block;
+  width: fit-content;
+  margin-top: 0.65rem;
+}
+.exhibit-video {
+  max-width: 100%;
+}
 .parchment {
   margin: auto;
   inset: 0;

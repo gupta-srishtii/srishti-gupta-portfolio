@@ -4,6 +4,14 @@
 
 ---
 
+## Movement, wand and exhibition checkpoints
+
+The movement regression came from a short forward boundary and a focus guard that blocked navigation buttons and links. The guide now accepts WASD and the arrow keys, travels far enough to read against the fixed scene, turns toward the direction of movement, and uses alternating procedural hip and knee poses with counter-swing and idle blending. The touch control targets a point on the path. The character still uses the temporary model and has no production skinning or cloth simulation.
+
+The wand casts before opening the sketchbook, entering a chapter portal, or inspecting a 3D exhibit. The shared cast includes a hand pose on the landing, a short beam and impact light, plus an original sound when audio is enabled. Buttons and keyboard activation share the route. Reduced motion and the lightweight mode use direct activation.
+
+The design hall now has separate labeled Graphic Design and UI/UX placements. The greenhouse has glazed sides, vault ribs, hanging greenery and labeled Painting placements. The technical atom has three orbiting places with one canonical calculator entry. The other worlds use selectable book, keepsake and reel props. Their actual writing, memories, art and video remain pending approved content. See [the public project audit](PROJECT_AUDIT.md) for source and deduplication decisions.
+
 ## Scene 01 clockwork opening
 
 The opening starts with a shader spark and pushes through a Three.js astronomical clock. The clock uses extruded toothed rims, beveled hands, a Canvas 2D brass dial, an animated celestial chart, and separately animated rings. The tunnel uses tube meshes, shader points and gas, and textured parchment meshes. A soft screen veil joins the tunnel to the forest camera path at 6.25 seconds. The landing keeps bounded WASD and touch movement and the existing sketchbook entry path.

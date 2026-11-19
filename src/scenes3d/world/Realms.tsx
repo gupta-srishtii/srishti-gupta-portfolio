@@ -1,58 +1,22 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { gallerySlots, type RealmId } from '@/data/portfolio';
-import { Books, Box, Frame, Lantern, Plant, Rod } from '../Objects';
+import { useEffect, useMemo } from 'react';
+import { emptyExhibitLabel, gallerySlots, type RealmId } from '@/data/portfolio';
+import { Books, Box, Frame, Lantern, Plant } from '../Objects';
 import { branch, grownTrunk } from './geometry';
 import { ContactShadow } from './Studio';
-import { woodGrain } from '../materials';
+import { ExhibitLabel, ExhibitionArchitecture } from './ExhibitionArchitecture';
+import ProjectAtom from './ProjectAtom';
+import WorldArtifact from './WorldArtifact';
 
-function Invention({ position }: { position: [number, number, number] }) {
-  const [active, setActive] = useState(false);
-  const mechanism = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    if (mechanism.current) mechanism.current.rotation.y = clock.elapsedTime * (active ? 0.7 : 0.12);
-  });
-  return (
-    <group
-      position={position}
-      onClick={(e) => {
-        e.stopPropagation();
-        setActive((v) => !v);
-      }}
-    >
-      <mesh position-y={0.55}>
-        <cylinderGeometry args={[0.55, 0.7, 1.1, 24]} />
-        <meshStandardMaterial color="#4a4d40" map={woodGrain} />
-      </mesh>
-      <group ref={mechanism} position-y={1.6}>
-        <mesh>
-          <icosahedronGeometry args={[0.35, 1]} />
-          <meshStandardMaterial
-            color="#a7bbae"
-            wireframe={!active}
-            metalness={0.5}
-            roughness={0.35}
-          />
-        </mesh>
-        {[0, 1, 2].map((i) => (
-          <mesh key={i} rotation={[i * 0.6, i * 0.4, i * 0.8]}>
-            <torusGeometry args={[0.6 + i * 0.12, 0.016, 8, 64]} />
-            <meshStandardMaterial color="#c8b17c" metalness={0.7} roughness={0.3} />
-          </mesh>
-        ))}
-      </group>
-    </group>
-  );
-}
 export default function Realms({
   realm,
   inspect,
+  inspected,
   reduced,
 }: {
   realm: RealmId;
-  inspect: (i: number) => void;
+  inspect: (i: number, at?: [number, number, number]) => void;
+  inspected: number | null;
   reduced: boolean;
 }) {
   const slots = gallerySlots(realm);
@@ -80,7 +44,16 @@ export default function Realms({
     },
     [tree, limbs],
   );
-  const roomColor = realm === 'motion' ? '#20252d' : realm === 'art' ? '#4b5b42' : '#34483e';
+  const roomColor =
+    realm === 'motion' || realm === 'code' ? '#20252d' : realm === 'art' ? '#4b5b42' : '#34483e';
+  const artifact =
+    realm === 'books'
+      ? 'book'
+      : realm === 'honors' || realm === 'gifts'
+        ? 'keepsake'
+        : realm === 'motion'
+          ? 'film'
+          : null;
   return (
     <group>
       <mesh position-y={-0.17} rotation-x={-Math.PI / 2}>
@@ -109,34 +82,19 @@ export default function Realms({
       )}
       {realm === 'code' && (
         <>
-          {[-3, 0, 3].map((x) => (
-            <Invention key={x} position={[x, 0, -0.4]} />
-          ))}
+          <ProjectAtom
+            slots={slots}
+            inspected={inspected}
+            reduced={reduced}
+            inspect={(index, point) => inspect(index, [point.x, point.y, point.z])}
+          />
           <pointLight position={[0, 2, -1]} intensity={8} color="#a0c7c3" distance={8} />
         </>
       )}
+      {realm === 'design' && <ExhibitionArchitecture greenhouse={false} />}
       {realm === 'art' && (
         <>
-          {[-1, 1].map((s) => (
-            <group key={s}>
-              {[0, 1, 2, 3].map((i) => (
-                <group key={i}>
-                  <Rod
-                    from={[s * 5, 0, i * 2 - 4]}
-                    to={[s * 5, 4.8, i * 2 - 4]}
-                    radius={0.04}
-                    color="#a8b292"
-                  />
-                  <Rod
-                    from={[s * 5, 4.8, i * 2 - 4]}
-                    to={[0, 6, i * 2 - 4]}
-                    radius={0.045}
-                    color="#a8b292"
-                  />
-                </group>
-              ))}
-            </group>
-          ))}
+          <ExhibitionArchitecture greenhouse />
           {[-4, -2, 2, 4].map((x) => (
             <Plant key={x} position={[x, 0, -2]} scale={1.3} />
           ))}
@@ -178,17 +136,34 @@ export default function Realms({
           </mesh>
         </>
       )}
-      {slots.map((entry, i) => (
-        <group key={entry?.id ?? i} position={[(i - 1) * 2.8, 0, 0]}>
-          <Frame
-            position={[0, realm === 'motion' ? 1.5 : 2.1, -3.6]}
-            image={entry?.image}
-            onClick={() => inspect(i)}
-            color={realm === 'motion' ? '#343e40' : ['#7b7e64', '#576c63', '#a58e73'][i % 3]}
-          />
-          <Lantern position={[0, 3.5, -3.05]} />
-        </group>
-      ))}
+      {realm !== 'code' &&
+        slots.map((entry, i) => (
+          <group key={entry?.id ?? i} position={[(i - 1) * 2.8, 0, 0]}>
+            {artifact && !entry?.image ? (
+              <group position={[0, realm === 'motion' ? 1.5 : 2.1, -3.44]}>
+                <WorldArtifact
+                  kind={artifact}
+                  activate={() => inspect(i)}
+                  selected={inspected === i}
+                  reduced={reduced}
+                />
+              </group>
+            ) : (
+              <Frame
+                position={[0, realm === 'motion' ? 1.5 : 2.1, -3.6]}
+                image={entry?.image}
+                onClick={() => inspect(i)}
+                color={['#596159', '#52615c', '#73624e'][i % 3]}
+              />
+            )}
+            <ExhibitLabel
+              position={[0, realm === 'motion' ? 0.48 : 0.86, -3.47]}
+              title={entry?.title ?? emptyExhibitLabel(realm, i)}
+              status={entry?.medium ?? (entry ? '' : 'AWAITING APPROVED WORK')}
+            />
+            <Lantern position={[0, 3.5, -3.05]} />
+          </group>
+        ))}
       {[-5, 5].map((x) => (
         <Plant key={x} position={[x, 0, -3]} scale={1.3} />
       ))}
