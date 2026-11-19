@@ -8,6 +8,8 @@ import Forest from './world/Forest';
 import Atmosphere from './world/Atmosphere';
 import Realms from './world/Realms';
 import Hero from './world/Hero';
+import Clockwork, { clockOrigin, forestArrival } from './world/Clockwork';
+import WoodlandLanding from './world/WoodlandLanding';
 import type { Reading } from './world/MagicalBook';
 import type { Journey } from '@/lib/journey';
 import { type MascotState, type RealmId } from '@/data/portfolio';
@@ -18,12 +20,14 @@ function CameraRig({
   mobile,
   bloom,
   heroPosition,
+  introTimeRef,
 }: {
   journey: Journey;
   reduced: boolean;
   mobile: boolean;
   bloom: boolean;
   heroPosition: RefObject<THREE.Vector3>;
+  introTimeRef: RefObject<number>;
 }) {
   const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const { camera, invalidate } = useThree();
@@ -55,13 +59,13 @@ function CameraRig({
       window.removeEventListener('blur', clear);
     };
   }, [invalidate]);
-  const heroCamera = useMemo(() => new THREE.Vector3(0.16, 2.22, mobile ? 9.15 : 8.1), [mobile]);
+  const heroCamera = useMemo(() => new THREE.Vector3(0.16, 2.12, mobile ? 9.45 : 8.75), [mobile]);
   const path = useMemo(
     () =>
       new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-7, 3.05, 18),
-        new THREE.Vector3(-3.2, 2.75, 14.7),
-        new THREE.Vector3(1.6, 2.55, 11),
+        new THREE.Vector3(-3.35, 3.45, 16.9),
+        new THREE.Vector3(-1.8, 3.01, 13.5),
+        new THREE.Vector3(-0.45, 2.34, 10.2),
         heroCamera,
       ]),
     [heroCamera],
@@ -100,9 +104,24 @@ function CameraRig({
     const index = journey.inspected ?? 0;
     const elapsed = clock.elapsedTime - started.current;
     const drift = reduced ? 0 : Math.sin(elapsed * 0.36) * 0.065;
+    if (v === 'intro' && !reduced) {
+      introTimeRef.current = elapsed;
+      if (elapsed < forestArrival) {
+        const approach = THREE.MathUtils.smootherstep(elapsed, 0.7, 4.06);
+        const flight = THREE.MathUtils.smoothstep(elapsed, 3.37, forestArrival + 0.25);
+        const distance = (mobile ? 14.9 : 8.3) * (1 - approach) - 28 * flight;
+        camera.position.set(
+          clockOrigin + Math.sin(elapsed * 0.84) * 0.23,
+          Math.cos(elapsed) * 0.09,
+          distance,
+        );
+        camera.lookAt(clockOrigin, 0, Math.min(-0.55, distance - 6));
+        return;
+      }
+    }
     const pos =
       v === 'intro'
-        ? path.getPoint(THREE.MathUtils.smootherstep(elapsed, 0, 9.6)).toArray()
+        ? path.getPoint(THREE.MathUtils.smoothstep(elapsed, forestArrival, 9.75)).toArray()
         : v === 'book'
           ? mobile
             ? bloom && !reduced && clock.elapsedTime - started.current < 7.6
@@ -128,11 +147,15 @@ function CameraRig({
             : v === 'intro'
               ? [
                   0.05,
-                  THREE.MathUtils.lerp(2.33, 1.53, THREE.MathUtils.smoothstep(elapsed, 3, 9)),
+                  THREE.MathUtils.lerp(
+                    2.18,
+                    mobile ? 1.42 : 1.29,
+                    THREE.MathUtils.smoothstep(elapsed, forestArrival, 9.75),
+                  ),
                   2.65,
                 ]
               : [heroPosition.current.x * 0.34, mobile ? 1.42 : 1.28, 2.65];
-    const alpha = reduced ? 1 : 1 - Math.exp(-3 * Math.min(dt, 0.5));
+    const alpha = reduced || camera.position.x > 50 ? 1 : 1 - Math.exp(-3 * Math.min(dt, 0.5));
     destination.set(pos[0], pos[1], pos[2]);
     aim.set(target[0], target[1], target[2]);
     camera.position.lerp(destination, alpha);
@@ -143,7 +166,7 @@ function CameraRig({
       transition.current = false;
       if (controls.current) controls.current.enabled = true;
     } else if (controls.current) controls.current.enabled = false;
-  });
+  }, -3);
   return journey.view === 'gallery' && journey.inspected === null ? (
     <OrbitControls
       ref={controls}
@@ -235,6 +258,7 @@ export default function Atelier({
   const [mobile, setMobile] = useState(false);
   const [resolution, setResolution] = useState(1);
   const heroPosition = useRef(new THREE.Vector3(0, 0, 3.2));
+  const introTimeRef = useRef(0);
   const landing = journey.view === 'studio' || journey.view === 'intro';
   const film = journey.view === 'gallery' && realm === 'motion';
   useEffect(() => {
@@ -304,23 +328,31 @@ export default function Atelier({
           />
         </>
       )}
+      {journey.view === 'intro' && !reduced && (
+        <Clockwork time={introTimeRef} low={low || mobile} />
+      )}
       <Suspense fallback={null}>
-        <Forest reduced={reduced} low={low || mobile} />
-        <Atmosphere reduced={reduced} low={low || mobile} />
-        {journey.view === 'gallery' ? (
-          <Realms realm={realm} inspect={inspect} reduced={reduced} />
+        {landing ? (
+          <WoodlandLanding reduced={reduced} low={low || mobile} />
         ) : (
-          <Studio
-            journey={journey}
-            reduced={reduced}
-            openBook={openBook}
-            mascot={mascot}
-            setMascot={setMascot}
-            enterRealm={enterRealm}
-            reading={reading}
-            bloom={bloom}
-          />
+          <Forest reduced={reduced} low={low || mobile} />
         )}
+        <Atmosphere reduced={reduced} low={low || mobile} />
+        {!landing &&
+          (journey.view === 'gallery' ? (
+            <Realms realm={realm} inspect={inspect} reduced={reduced} />
+          ) : (
+            <Studio
+              journey={journey}
+              reduced={reduced}
+              openBook={openBook}
+              mascot={mascot}
+              setMascot={setMascot}
+              enterRealm={enterRealm}
+              reading={reading}
+              bloom={bloom}
+            />
+          ))}
       </Suspense>
       <CameraRig
         journey={journey}
@@ -328,6 +360,7 @@ export default function Atelier({
         mobile={mobile}
         bloom={bloom}
         heroPosition={heroPosition}
+        introTimeRef={introTimeRef}
       />
     </Canvas>
   );

@@ -4,7 +4,19 @@
 
 ---
 
-## Scene 01 character-led landing
+## Scene 01 clockwork opening
+
+The opening starts with a shader spark and pushes through a Three.js astronomical clock. The clock uses extruded toothed rims, beveled hands, a Canvas 2D brass dial, an animated celestial chart, and separately animated rings. The tunnel uses tube meshes, shader points and gas, and textured parchment meshes. A soft screen veil joins the tunnel to the forest camera path at 6.25 seconds. The landing keeps bounded WASD and touch movement and the existing sketchbook entry path.
+
+The backdrop is a generated matte painting on a perspective-fitted plane with separate 3D foliage, guide and atmospheric particles in front. The forest is a hybrid set. The distant cottage and trees are painted details. ImageGen built-in mode produced the source painting from a text prompt describing an ancient moonlit forest, a warmly lit ivy-covered clockmaker's atelier off to the right, an unobstructed center, layered mist and no people or text. The selected image was encoded with Sharp at WebP quality 88 as `public/scene01/moonlit-atelier.webp`. No private references were used as generation inputs.
+
+ImageGen prompt: “Original widescreen 3:2 cinematic matte painting for an enchanted clockmaker's atelier in an ancient moonlit forest. View from eye level through an open woodland workshop. Layered trunks and velvet moss, distant cool blue mist, dense soft woodland detail, one warm amber stained leaded astronomical window in a rustic ivy-covered cottage toward the right third, warm lanterns along edges. Dark blue and green, amber accents, restrained contrast, background soft-focus so a real 3D actor and titles can sit in front. Center and lower middle unobstructed. High-end atmospheric film production design, tactile painterly photoreal textures, no people, no text, no logos.”
+
+The 48-second score is composed in code from original notes and additive synthesis. It combines bowed string swells, celesta-like tones, soft piano attacks and an airy bed. Note tails wrap across the stereo buffer boundary. Playback remains opt-in and uses the existing volume and mute controls.
+
+The custom character remains unfinished. Blender is absent from PATH and the standard install directory and the Windows package-manager alias could not run in this session. The official Blender 4.5 download directory is reachable. A viable local workflow is to use the official Windows portable build, sculpt from the already reviewed private references, retopologize and UV the body and clothing, bind and weight a humanoid armature, and create idle, walking and wave clips with blink and gaze controls. Export a self-contained GLB with skin weights, animation and shape keys for Three.js. Only the resulting public model and approved textures should be shipped. None of those character production steps was carried out for this pass. The existing procedural guide remains an explicitly temporary stand-in.
+
+## Earlier Scene 01 character-led landing
 
 The landing now follows a ten-second forest approach into a centered, full-length hero shot. The title is rendered behind the guide in the 3D scene, with separate portrait artwork and a semantic HTML heading. The existing guide responds to desktop WASD and taps on the rug on touch layouts. Travel stays on the atelier floor, with eased turns and a restrained camera follow. Clicking the guide plays her existing wave.
 

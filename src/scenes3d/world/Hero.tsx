@@ -11,8 +11,8 @@ const movementKeys = ['w', 'a', 's', 'd'];
 
 function titleArtwork(portrait: boolean) {
   const canvas = document.createElement('canvas');
-  canvas.width = portrait ? 1024 : 2048;
-  canvas.height = portrait ? 360 : 340;
+  canvas.width = 1024;
+  canvas.height = portrait ? 360 : 650;
   const ink = canvas.getContext('2d')!;
   ink.fillStyle = '#f4deb1';
   ink.textAlign = 'center';
@@ -20,13 +20,14 @@ function titleArtwork(portrait: boolean) {
   ink.shadowColor = '#101c17';
   ink.shadowBlur = portrait ? 18 : 12;
   ink.shadowOffsetY = 4;
-  ink.font = portrait ? '160px Georgia' : '228px Georgia';
+  ink.font = portrait ? '160px Georgia' : '229px Georgia';
   if (portrait) {
     ink.fillText('SRISHTI', 512, 95, 1000);
     ink.fillText('GUPTA', 512, 266, 1000);
   } else {
-    ink.fillText('SRISHTI', 438, 170, 840);
-    ink.fillText('GUPTA', 1609, 170, 820);
+    ink.textAlign = 'left';
+    ink.fillText('SRISHTI', 55, 215, 930);
+    ink.fillText('GUPTA', 55, 440, 900);
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -138,8 +139,8 @@ export default function Hero({
 
   return (
     <>
-      <mesh position={mobile ? [0, 3.0, 2.18] : [0, 1.72, 2.18]} raycast={() => null}>
-        <planeGeometry args={mobile ? [2.48, 0.87] : [7.05, 1.17]} />
+      <mesh position={mobile ? [0, 3.0, 2.18] : [-2.1, 1.92, 2.18]} raycast={() => null}>
+        <planeGeometry args={mobile ? [2.62, 0.92] : [3.52, 2.23]} />
         <meshBasicMaterial
           ref={title}
           map={artwork}

@@ -95,6 +95,17 @@
   bottom: -15px;
   max-width: 240px;
 }
+
+.scene-footer-opening .scene-quality {
+  display: none;
+}
+
+.guide-settings {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 12px;
+}
 .intro-progress.running {
   animation-duration: 10s;
 }
@@ -389,6 +400,29 @@
   bottom: clamp(132px, 18svh, 177px);
   transform: translateX(-50%);
   text-align: center;
+}
+
+main:has(.intro) .vignette {
+  background: radial-gradient(ellipse, transparent 38%, #03090e62 100%);
+}
+
+main:has(.hero-caption) .vignette {
+  background:
+    linear-gradient(0deg, #060c0ee8 0%, #070f1166 19%, transparent 43%),
+    radial-gradient(ellipse at 49% 44%, transparent 37%, #080f1970 100%);
+}
+
+.intro-skip {
+  top: auto;
+  bottom: 73px;
+  right: 5%;
+  color: #f0dcb3;
+  text-shadow: 0 1px 6px #090a0e;
+}
+
+.intro-progress {
+  opacity: 0.58;
+  width: min(28vw, 220px);
 }
 .hero-caption p:last-child {
   margin: 0;

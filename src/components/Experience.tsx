@@ -313,7 +313,7 @@ export default function Experience() {
             {loaded && !fallback && (
               <p className="hero-movement-hint">
                 <span className="desktop-hint">W A S D to move</span>
-                <span className="touch-hint">Tap the rug to move</span>
+                <span className="touch-hint">Tap the path to move</span>
               </p>
             )}
           </div>
@@ -473,13 +473,20 @@ export default function Experience() {
               : 'Atelier'}
         </button>
       )}
-      <footer className="scene-footer">
+      <footer
+        className={
+          journey.view === 'intro' || journey.view === 'studio'
+            ? 'scene-footer scene-footer-opening'
+            : 'scene-footer'
+        }
+      >
         <Ambience
           revealing={journey.view === 'book' && bloom && !reading}
           page={journey.view === 'book' && !reading ? journey.page : null}
         />
         <div>
           <button
+            className="scene-quality"
             onClick={() => {
               setLightweight((v) => !v);
               skip();
@@ -489,7 +496,7 @@ export default function Experience() {
           >
             {supported === false ? '3D unavailable' : fallback ? 'Enable 3D' : 'Quiet mode'}
           </button>
-          <button onClick={() => setLow((v) => !v)} aria-pressed={low}>
+          <button className="scene-quality" onClick={() => setLow((v) => !v)} aria-pressed={low}>
             {low ? 'Quality: gentle' : 'Quality: full'}
           </button>
           <button onClick={() => openPanel('guide')}>Field guide</button>
@@ -604,8 +611,32 @@ export default function Experience() {
               <p className="fine-print">
                 Procedural guide animations are blocking poses, pending a custom rig.
               </p>
+              {(journey.view === 'intro' || journey.view === 'studio') && (
+                <div className="guide-settings">
+                  <button
+                    className="text-button"
+                    aria-pressed={lightweight}
+                    disabled={supported === false}
+                    onClick={() => {
+                      setLightweight((value) => !value);
+                      skip();
+                      setPanel(null);
+                    }}
+                  >
+                    {fallback ? 'Enable 3D' : 'Quiet mode'}
+                  </button>
+                  <button
+                    className="text-button"
+                    aria-pressed={low}
+                    onClick={() => setLow((value) => !value)}
+                  >
+                    {low ? 'Quality: gentle' : 'Quality: full'}
+                  </button>
+                </div>
+              )}
               <button
                 className="text-button"
+                disabled={reduced}
                 onClick={() => {
                   setPanel(null);
                   setReading(null);
