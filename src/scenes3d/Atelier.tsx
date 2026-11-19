@@ -10,6 +10,7 @@ import Realms from './world/Realms';
 import Hero from './world/Hero';
 import Clockwork, { clockOrigin, forestArrival } from './world/Clockwork';
 import WoodlandLanding from './world/WoodlandLanding';
+import WandFlight, { type CastTarget } from './world/WandFlight';
 import type { Reading } from './world/MagicalBook';
 import type { Journey } from '@/lib/journey';
 import { type MascotState, type RealmId } from '@/data/portfolio';
@@ -238,6 +239,7 @@ export default function Atelier({
   failed,
   reading = null,
   bloom = false,
+  spell = null,
 }: {
   journey: Journey;
   realm: RealmId;
@@ -254,6 +256,7 @@ export default function Atelier({
   failed: () => void;
   reading?: Reading;
   bloom?: boolean;
+  spell?: CastTarget | null;
 }) {
   const [mobile, setMobile] = useState(false);
   const [resolution, setResolution] = useState(1);
@@ -332,6 +335,7 @@ export default function Atelier({
       {journey.view === 'intro' && !reduced && (
         <Clockwork time={introTimeRef} low={low || mobile} />
       )}
+      {spell && <WandFlight key={spell.id} cast={spell} heroPosition={heroPosition} />}
       <Suspense fallback={null}>
         {landing ? (
           <WoodlandLanding reduced={reduced} low={low || mobile} />

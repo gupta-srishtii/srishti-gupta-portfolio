@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { Component, useCallback, useEffect, useReducer, useState } from 'react';
+import { Component, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   entries,
   gallerySlots,
@@ -10,12 +10,13 @@ import {
   type Panel,
   type RealmId,
 } from '@/data/portfolio';
-import { initialJourney, journeyReducer } from '@/lib/journey';
+import { initialJourney, journeyReducer, type Journey } from '@/lib/journey';
 import Modal from './Modal';
 import Fallback from './Fallback';
 import Ambience from './Ambience';
 import { chapters } from '@/data/chapters';
 import type { Reading } from '@/scenes3d/world/MagicalBook';
+import type { CastTarget } from '@/scenes3d/world/WandFlight';
 const Atelier = dynamic(() => import('@/scenes3d/Atelier'), {
   ssr: false,
   loading: () => <div className="scene-loading">Gathering the woodland light…</div>,
@@ -49,6 +50,10 @@ export default function Experience() {
     [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState(''),
     [command, setCommand] = useState(false);
+  const [spell, setSpell] = useState<{ target: CastTarget; scope: Journey } | null>(null);
+  const castId = useRef(0);
+  const castTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(castTimer.current), [journey.view, realm]);
   const skip = useCallback(() => {
     dispatch({ type: 'skip' });
     try {
@@ -181,6 +186,28 @@ export default function Experience() {
     }
   };
   const fallback = supported === false || lightweight;
+  const castAt = (at: CastTarget['at'], action: () => void) => {
+    const scene = journey.view;
+    if (fallback || reduced || (scene !== 'studio' && scene !== 'gallery' && scene !== 'book')) {
+      action();
+      return;
+    }
+    window.clearTimeout(castTimer.current);
+    setSpell({ target: { at, scene, id: ++castId.current }, scope: journey });
+    setMascot('cast');
+    castTimer.current = window.setTimeout(() => {
+      setSpell(null);
+      setMascot('idle');
+      action();
+    }, 440);
+  };
+  const castBook = () => castAt([0.86, 1.35, 0.65], openBook);
+  const castExhibit = (index: number) =>
+    castAt([(index - 1) * 2.8, realm === 'motion' ? 1.5 : 2.1, -3.45], () =>
+      dispatch({ type: 'inspect', index }),
+    );
+  const castPortal = (target: RealmId) => castAt([0.31, 1.72, 0.55], () => enterRealm(target));
+  const activeSpell = spell?.scope === journey ? spell.target : null;
   const currentRealm = realms.find((item) => item.id === realm)!;
   const selected = journey.inspected === null ? null : gallerySlots(realm)[journey.inspected];
   const showIndex =
@@ -268,9 +295,10 @@ export default function Experience() {
               low={low}
               paused={Boolean(panel || command)}
               downgrade={() => setLow(true)}
-              openBook={openBook}
-              inspect={(index) => dispatch({ type: 'inspect', index })}
-              enterRealm={enterRealm}
+              openBook={castBook}
+              inspect={castExhibit}
+              enterRealm={journey.view === 'book' ? castPortal : enterRealm}
+              spell={activeSpell}
               ready={ready}
               failed={failed}
               reading={reading}
@@ -304,7 +332,7 @@ export default function Experience() {
           <div className="invitation hero-invitation">
             <button
               className="primary"
-              onClick={openBook}
+              onClick={castBook}
               onPointerEnter={() => setMascot('interact')}
               onPointerLeave={() => setMascot('idle')}
             >
@@ -368,7 +396,7 @@ export default function Experience() {
             {!reading && (
               <button
                 className="enter-world"
-                onClick={() => enterRealm(chapters[journey.page].realm)}
+                onClick={() => castPortal(chapters[journey.page].realm)}
               >
                 Enter {chapters[journey.page].world} ↗
               </button>
@@ -411,7 +439,7 @@ export default function Experience() {
             <h1>{currentRealm.name}</h1>
             <p>
               {journey.inspected === null
-                ? 'Drag to look around. Select a frame to come closer.'
+                ? 'Drag to look around. Select an exhibit to cast.'
                 : (selected?.title ?? 'An exhibition in the making')}
             </p>
           </section>
@@ -421,7 +449,7 @@ export default function Experience() {
                 key={entry?.id ?? i}
                 aria-label={`Inspect ${entry?.title ?? `empty frame ${i + 1}`}`}
                 aria-pressed={journey.inspected === i}
-                onClick={() => dispatch({ type: 'inspect', index: i })}
+                onClick={() => castExhibit(i)}
               >
                 {String(i + 1).padStart(2, '0')}
               </button>
@@ -481,6 +509,7 @@ export default function Experience() {
         }
       >
         <Ambience
+          casting={Boolean(activeSpell)}
           revealing={journey.view === 'book' && bloom && !reading}
           page={journey.view === 'book' && !reading ? journey.page : null}
         />

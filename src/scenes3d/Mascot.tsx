@@ -130,7 +130,14 @@ export default function Mascot({
         skirtPose.current.rotation.x = Math.sin(phase) * 0.055 * gait;
       }
       if (leftArm.current) leftArm.current.rotation.x = Math.sin(phase) * 0.46 * gait;
-      if (arm.current) arm.current.rotation.x = -Math.sin(phase) * 0.46 * gait;
+      if (arm.current) {
+        arm.current.rotation.x = THREE.MathUtils.damp(
+          arm.current.rotation.x,
+          state === 'cast' ? -1.24 : -Math.sin(phase) * 0.46 * gait,
+          14,
+          dt,
+        );
+      }
     }
     if (root.current) {
       root.current.position.y =
@@ -215,15 +222,17 @@ export default function Mascot({
         arm.current.rotation.z,
         state === 'wave'
           ? -1.44 + Math.sin(t * 4) * 0.12
-          : state === 'interact'
-            ? -1.2
-            : state === 'celebrate'
-              ? -2.7
-              : state === 'walk' || state === 'run'
-                ? hero
-                  ? -0.14
-                  : Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
-                : -0.12,
+          : state === 'cast'
+            ? 0.25
+            : state === 'interact'
+              ? -1.2
+              : state === 'celebrate'
+                ? -2.7
+                : state === 'walk' || state === 'run'
+                  ? hero
+                    ? -0.14
+                    : Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
+                  : -0.12,
         5,
         dt,
       );
@@ -395,6 +404,26 @@ export default function Mascot({
                   <meshStandardMaterial color={palette.gold} metalness={0.6} roughness={0.35} />
                 </mesh>
               ))}
+              {hero && s === 1 && (
+                <group position={[0.018, -0.237, 0.037]} rotation-x={-0.67}>
+                  <mesh position-y={-0.143}>
+                    <cylinderGeometry args={[0.024, 0.009, 0.34, 12]} />
+                    <meshStandardMaterial color="#594338" roughness={0.68} />
+                  </mesh>
+                  <mesh position-y={-0.065}>
+                    <cylinderGeometry args={[0.022, 0.022, 0.056, 12]} />
+                    <meshStandardMaterial color="#bd9553" metalness={0.6} roughness={0.32} />
+                  </mesh>
+                  <mesh position-y={-0.326}>
+                    <octahedronGeometry args={[0.027]} />
+                    <meshStandardMaterial
+                      color="#dbc38f"
+                      emissive="#d38937"
+                      emissiveIntensity={state === 'cast' ? 2.2 : 0.22}
+                    />
+                  </mesh>
+                </group>
+              )}
             </group>
           </group>
         ))}

@@ -203,7 +203,7 @@ export default function Hero({
           }}
         >
           <Mascot
-            state={walking ? 'walk' : state}
+            state={walking && state !== 'cast' ? 'walk' : state}
             reduced={reduced}
             walkDistanceRef={walkDistanceRef}
             hero

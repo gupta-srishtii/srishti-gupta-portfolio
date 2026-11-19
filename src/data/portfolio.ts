@@ -67,7 +67,7 @@ export const realms = [
 export type RealmId = (typeof realms)[number]['id'];
 export type Panel = RealmId | 'work' | 'resume' | 'contact' | 'guide' | null;
 export type MascotState =
-  'idle' | 'wave' | 'walk' | 'run' | 'turn' | 'interact' | 'celebrate' | 'sit';
+  'idle' | 'wave' | 'walk' | 'run' | 'turn' | 'interact' | 'celebrate' | 'sit' | 'cast';
 
 /** Only verified work belongs here. Empty exhibitions are intentional. */
 export interface PortfolioEntry {

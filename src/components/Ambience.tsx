@@ -76,7 +76,15 @@ function score(context: AudioContext) {
   });
   return buffer;
 }
-export default function Ambience({ revealing, page }: { revealing: boolean; page: number | null }) {
+export default function Ambience({
+  revealing,
+  page,
+  casting,
+}: {
+  revealing: boolean;
+  page: number | null;
+  casting: boolean;
+}) {
   const engine = useRef<{
     context: AudioContext;
     gain: GainNode;
@@ -84,20 +92,26 @@ export default function Ambience({ revealing, page }: { revealing: boolean; page
   } | null>(null);
   const [playing, setPlaying] = useState(false),
     [volume, setVolume] = useState(0.35);
-  const previous = useRef({ revealing, page });
+  const previous = useRef({ revealing, page, casting });
   useEffect(() => {
     const prior = previous.current;
-    previous.current = { revealing, page };
+    previous.current = { revealing, page, casting };
     if (!engine.current || !playing) return;
     const opening = revealing && !prior.revealing;
     const turning = page !== null && prior.page !== null && page !== prior.page;
-    if (!opening && !turning) return;
+    const cast = casting && !prior.casting;
+    if (!opening && !turning && !cast) return;
     const { context, gain } = engine.current;
-    const notes = opening ? [523.25, 659.25, 783.99, 1046.5] : [392, 587.33];
+    const notes = opening
+      ? [523.25, 659.25, 783.99, 1046.5]
+      : cast
+        ? [659.25, 880, 1174.66]
+        : [392, 587.33];
     notes.forEach((pitch, index) => {
       const tone = context.createOscillator();
       const envelope = context.createGain();
-      const start = context.currentTime + (opening ? 0.7 + index * 0.28 : index * 0.08);
+      const start =
+        context.currentTime + (opening ? 0.7 + index * 0.28 : index * (cast ? 0.055 : 0.08));
       const duration = opening ? 0.8 : 0.24;
       tone.type = 'sine';
       tone.frequency.value = pitch;
@@ -112,7 +126,7 @@ export default function Ambience({ revealing, page }: { revealing: boolean; page
         envelope.disconnect();
       };
     });
-  }, [page, playing, revealing]);
+  }, [page, playing, revealing, casting]);
   useEffect(
     () => () => {
       if (engine.current) {
