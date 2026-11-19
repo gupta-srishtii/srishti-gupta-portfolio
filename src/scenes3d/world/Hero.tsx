@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import Mascot from '../Mascot';
+import ApprovedGuide from './ApprovedGuide';
+import { approvedCharacter } from '@/data/portfolio';
 import { ContactShadow } from './Studio';
 import type { MascotState } from '@/data/portfolio';
 
@@ -74,6 +76,8 @@ export default function Hero({
   const xLimit = mobile ? 0.85 : 2.2;
   const near = mobile ? 3.95 : 4.85;
   const far = mobile ? 1.45 : 0.3;
+  const pose = walking && state !== 'cast' ? 'walk' : state;
+  const standIn = <Mascot state={pose} reduced={reduced} walkDistanceRef={walkDistanceRef} hero />;
   const artwork = useMemo(() => titleArtwork(mobile), [mobile]);
   useEffect(() => () => artwork.dispose(), [artwork]);
 
@@ -202,12 +206,16 @@ export default function Hero({
             wave();
           }}
         >
-          <Mascot
-            state={walking && state !== 'cast' ? 'walk' : state}
-            reduced={reduced}
-            walkDistanceRef={walkDistanceRef}
-            hero
-          />
+          {approvedCharacter ? (
+            <ApprovedGuide
+              path={approvedCharacter}
+              state={pose}
+              reduced={reduced}
+              fallback={standIn}
+            />
+          ) : (
+            standIn
+          )}
         </group>
       </group>
       {active && mobile && (

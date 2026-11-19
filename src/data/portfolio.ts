@@ -1,3 +1,5 @@
+import catalog from './approved-content.json';
+
 export const realms = [
   {
     id: 'code',
@@ -9,11 +11,19 @@ export const realms = [
   },
   {
     id: 'design',
-    name: 'Graphic design & UI/UX',
+    name: 'Graphic design',
     short: 'Design',
     subtitle: 'Form, feeling, and thoughtful interfaces',
     symbol: '02',
     color: '#d3968c',
+  },
+  {
+    id: 'ux',
+    name: 'The UI/UX studio',
+    short: 'UI/UX',
+    subtitle: 'Interfaces, prototypes, and the decisions behind them',
+    symbol: '09',
+    color: '#a8b2cb',
   },
   {
     id: 'motion',
@@ -78,10 +88,14 @@ export interface PortfolioEntry {
   medium?: string;
   year?: number;
   image?: string;
+  imageAlt?: string;
   video?: string;
+  captions?: string;
   url?: string;
   sourceLinks?: { label: string; url: string }[];
   technologies?: string[];
+  process?: string;
+  tools?: string[];
 }
 export const entries: PortfolioEntry[] = [
   {
@@ -97,13 +111,15 @@ export const entries: PortfolioEntry[] = [
       { label: 'Related CM-PBL fork', url: 'https://github.com/gupta-srishtii/CM-PBL' },
     ],
   },
+  ...(catalog.exhibits as PortfolioEntry[]),
 ];
+export const approvedCharacter = catalog.character as string | null;
 export const profile = {
   name: 'Srishti Gupta',
   title: 'CSE AI/ML student · multidisciplinary creative',
   bio: 'I explore graphic design, UI/UX, coding, video editing, painting, dance, and personal creative projects.',
-  email: '',
-  resume: '',
+  email: catalog.profile.email,
+  resume: catalog.profile.resume,
   education: [] as { institution: string; degree: string; period: string }[],
   experience: [] as { organization: string; role: string; period: string }[],
 };
@@ -114,7 +130,12 @@ export function gallerySlots(realm: RealmId) {
   return [...works, ...Array<null>(Math.max(0, 3 - works.length)).fill(null)];
 }
 export function emptyExhibitLabel(realm: RealmId, index: number) {
-  if (realm === 'design') return index === 1 ? 'UI/UX case study' : 'Graphic design';
+  if (realm === 'design')
+    return ['Poster', 'Editorial design', 'Visual identity'][index] ?? 'Graphic design';
+  if (realm === 'ux')
+    return (
+      ['Interactive prototype', 'User flow', 'Interface case study'][index] ?? 'UI/UX case study'
+    );
   if (realm === 'art') return 'Painting';
   if (realm === 'code') return 'Technical project';
   if (realm === 'books') return 'Book or story';
