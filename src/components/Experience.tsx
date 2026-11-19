@@ -312,7 +312,7 @@ export default function Experience() {
             </button>
             {loaded && !fallback && (
               <p className="hero-movement-hint">
-                <span className="desktop-hint">W A S D to move</span>
+                <span className="desktop-hint">WASD or arrow keys to move</span>
                 <span className="touch-hint">Tap the path to move</span>
               </p>
             )}

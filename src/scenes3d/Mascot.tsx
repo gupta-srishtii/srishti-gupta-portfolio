@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MascotState } from '@/data/portfolio';
@@ -9,10 +9,12 @@ export default function Mascot({
   state,
   reduced,
   hero = false,
+  walkDistanceRef,
 }: {
   state: MascotState;
   reduced: boolean;
   hero?: boolean;
+  walkDistanceRef?: RefObject<number>;
 }) {
   const root = useRef<THREE.Group>(null),
     arm = useRef<THREE.Group>(null),
@@ -22,6 +24,10 @@ export default function Mascot({
   const hair = useRef<THREE.Group>(null);
   const eyes = useRef<THREE.Group>(null);
   const pupils = useRef<(THREE.Mesh | null)[]>([]);
+  const hips = useRef<(THREE.Group | null)[]>([]);
+  const knees = useRef<(THREE.Group | null)[]>([]);
+  const skirtPose = useRef<THREE.Group>(null);
+  const stride = useRef(0);
   const drape = useMemo(() => {
     const g = new THREE.BufferGeometry(),
       vertices: number[] = [],
@@ -100,15 +106,39 @@ export default function Mascot({
     return geometry;
   }, []);
   useEffect(() => () => skirt.dispose(), [skirt]);
-  useFrame(({ clock, pointer }, dt) => {
+  useFrame(({ clock, pointer, invalidate }, dt) => {
     const t = reduced ? 0 : clock.elapsedTime;
+    const walking = hero && (state === 'walk' || state === 'run');
+    const phase = walkDistanceRef ? (walkDistanceRef.current / 0.92) * Math.PI * 2 : t * 6;
+    const gait = (stride.current = THREE.MathUtils.damp(
+      stride.current,
+      walking ? (reduced ? 0.62 : 1) : 0,
+      12,
+      dt,
+    ));
+    if (reduced && !walking && gait > 0.01) invalidate();
+    if (hero) {
+      for (let i = 0; i < 2; i++) {
+        const step = phase + i * Math.PI;
+        const thigh = hips.current[i];
+        const shin = knees.current[i];
+        if (thigh) thigh.rotation.x = Math.sin(step) * 0.47 * gait;
+        if (shin) shin.rotation.x = Math.max(0, -Math.cos(step)) * 0.38 * gait;
+      }
+      if (skirtPose.current) {
+        skirtPose.current.scale.y = 1 - gait * 0.19;
+        skirtPose.current.rotation.x = Math.sin(phase) * 0.055 * gait;
+      }
+      if (leftArm.current) leftArm.current.rotation.x = Math.sin(phase) * 0.46 * gait;
+      if (arm.current) arm.current.rotation.x = -Math.sin(phase) * 0.46 * gait;
+    }
     if (root.current) {
       root.current.position.y =
         state === 'sit'
           ? -0.25
           : state === 'celebrate'
             ? Math.abs(Math.sin(t * 5)) * 0.14
-            : Math.sin(t * 1.5) * 0.012;
+            : Math.sin(t * 1.5) * 0.012 * (1 - gait) + Math.abs(Math.sin(phase)) * 0.027 * gait;
       root.current.position.x =
         !hero && (state === 'walk' || state === 'run') ? Math.sin(t * 0.8) * 0.5 : 0;
       root.current.rotation.y = THREE.MathUtils.damp(
@@ -117,7 +147,8 @@ export default function Mascot({
         4,
         dt,
       );
-      root.current.rotation.z = reduced ? 0 : 0.025 * Math.sin(t * 1.2);
+      root.current.rotation.z = 0.025 * (Math.sin(t * 1.2) * (1 - gait) + Math.sin(phase) * gait);
+      if (hero) root.current.rotation.x = gait * 0.039;
     }
     if (head.current) {
       head.current.rotation.y = reduced
@@ -172,7 +203,9 @@ export default function Mascot({
           : state === 'interact'
             ? 0.6
             : state === 'walk' || state === 'run'
-              ? -Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
+              ? hero
+                ? 0.14
+                : -Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
               : 0.12,
         5,
         dt,
@@ -187,7 +220,9 @@ export default function Mascot({
             : state === 'celebrate'
               ? -2.7
               : state === 'walk' || state === 'run'
-                ? Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
+                ? hero
+                  ? -0.14
+                  : Math.sin(t * (state === 'run' ? 12 : 6)) * 0.5
                 : -0.12,
         5,
         dt,
@@ -196,13 +231,45 @@ export default function Mascot({
   return (
     <group position={hero ? [0, 0, 0] : [-1.83, 0.02, 0.92]} scale={hero ? 1.13 : 1.08}>
       <group ref={root}>
-        <mesh position-y={0.63} geometry={skirt} castShadow>
-          <meshStandardMaterial color={palette.burgundy} roughness={0.92} />
-        </mesh>
-        <mesh position-y={0.09} rotation-x={Math.PI / 2}>
-          <torusGeometry args={[0.45, 0.009, 6, 48]} />
-          <meshStandardMaterial color={palette.gold} />
-        </mesh>
+        {hero &&
+          [-1, 1].map((side, i) => (
+            <group
+              key={side}
+              ref={(node) => {
+                hips.current[i] = node;
+              }}
+              position={[side * 0.145, 0.83, 0]}
+            >
+              <mesh position-y={-0.19}>
+                <capsuleGeometry args={[0.066, 0.27, 4, 10]} />
+                <meshStandardMaterial color="#7b293b" roughness={0.9} />
+              </mesh>
+              <group
+                ref={(node) => {
+                  knees.current[i] = node;
+                }}
+                position-y={-0.39}
+              >
+                <mesh position-y={-0.17}>
+                  <capsuleGeometry args={[0.052, 0.25, 4, 10]} />
+                  <meshStandardMaterial color="#9e694b" roughness={0.82} />
+                </mesh>
+                <mesh position={[0, -0.388, 0.055]} scale={[0.069, 0.045, 0.132]}>
+                  <sphereGeometry args={[1, 12, 8]} />
+                  <meshStandardMaterial color="#301f24" roughness={0.8} />
+                </mesh>
+              </group>
+            </group>
+          ))}
+        <group ref={skirtPose} position-y={1.19}>
+          <mesh position-y={-0.56} geometry={skirt} castShadow>
+            <meshStandardMaterial color={palette.burgundy} roughness={0.92} />
+          </mesh>
+          <mesh position-y={-1.1} rotation-x={Math.PI / 2}>
+            <torusGeometry args={[0.45, 0.009, 6, 48]} />
+            <meshStandardMaterial color={palette.gold} />
+          </mesh>
+        </group>
         <mesh position-y={1.32} scale={[0.24, 0.32, 0.14]}>
           <sphereGeometry args={[1, 16, 12]} />
           <meshStandardMaterial color={palette.burgundy} />

@@ -7,7 +7,16 @@ import Mascot from '../Mascot';
 import { ContactShadow } from './Studio';
 import type { MascotState } from '@/data/portfolio';
 
-const movementKeys = ['w', 'a', 's', 'd'];
+const movementKeys = new Set([
+  'w',
+  'a',
+  's',
+  'd',
+  'arrowup',
+  'arrowleft',
+  'arrowdown',
+  'arrowright',
+]);
 
 function titleArtwork(portrait: boolean) {
   const canvas = document.createElement('canvas');
@@ -37,6 +46,7 @@ function titleArtwork(portrait: boolean) {
 
 export default function Hero({
   active,
+  paused,
   mobile,
   reduced,
   state,
@@ -44,6 +54,7 @@ export default function Hero({
   position,
 }: {
   active: boolean;
+  paused: boolean;
   mobile: boolean;
   reduced: boolean;
   state: MascotState;
@@ -53,49 +64,66 @@ export default function Hero({
   const actor = useRef<THREE.Group>(null);
   const title = useRef<THREE.MeshBasicMaterial>(null);
   const keys = useRef(new Set<string>());
-  const touchGoal = useRef<number | null>(null);
+  const touchGoal = useRef<THREE.Vector2 | null>(null);
   const speed = useRef(new THREE.Vector2());
+  const walkDistanceRef = useRef(0);
+  const projected = useRef(new THREE.Vector3());
   const [walking, setWalking] = useState(false);
   const walkingNow = useRef(false);
   const invalidate = useThree((s) => s.invalidate);
+  const xLimit = mobile ? 0.85 : 2.2;
+  const near = mobile ? 3.95 : 4.85;
+  const far = mobile ? 1.45 : 0.3;
   const artwork = useMemo(() => titleArtwork(mobile), [mobile]);
   useEffect(() => () => artwork.dispose(), [artwork]);
 
   useEffect(() => {
-    if (!active) return;
     const velocity = speed.current;
     const pressed = (e: KeyboardEvent) => {
       const target = e.target;
       if (
+        paused ||
+        e.defaultPrevented ||
+        e.isComposing ||
         e.altKey ||
         e.ctrlKey ||
         e.metaKey ||
         (target instanceof HTMLElement &&
-          target.closest('input, textarea, select, button, a, dialog, [contenteditable]'))
+          target.closest(
+            'input, textarea, select, dialog, [contenteditable="true"], [role="slider"]',
+          ))
       )
         return;
       const key = e.key.toLowerCase();
-      if (!movementKeys.includes(key)) return;
+      if (!movementKeys.has(key)) return;
+      e.preventDefault();
       keys.current.add(key);
       touchGoal.current = null;
       invalidate();
     };
     const released = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
-    const clear = () => keys.current.clear();
+    const clear = () => {
+      keys.current.clear();
+      touchGoal.current = null;
+      velocity.set(0, 0);
+    };
+    const onHide = () => {
+      if (document.hidden) clear();
+    };
     window.addEventListener('keydown', pressed);
     window.addEventListener('keyup', released);
     window.addEventListener('blur', clear);
+    document.addEventListener('visibilitychange', onHide);
     return () => {
       window.removeEventListener('keydown', pressed);
       window.removeEventListener('keyup', released);
       window.removeEventListener('blur', clear);
+      document.removeEventListener('visibilitychange', onHide);
       clear();
-      touchGoal.current = null;
-      velocity.set(0, 0);
     };
-  }, [active, invalidate]);
+  }, [paused, invalidate]);
 
-  useFrame((_, delta) => {
+  useFrame(({ gl, camera }, delta) => {
     if (!actor.current) return;
     if (title.current) {
       title.current.opacity = reduced
@@ -106,21 +134,30 @@ export default function Hero({
     const pressed = keys.current;
     const point = position.current;
     const goal = touchGoal.current;
-    let dx = Number(pressed.has('d')) - Number(pressed.has('a'));
-    const dz = Number(pressed.has('s')) - Number(pressed.has('w'));
+    let dx =
+      Number(pressed.has('d') || pressed.has('arrowright')) -
+      Number(pressed.has('a') || pressed.has('arrowleft'));
+    let dz =
+      Number(pressed.has('s') || pressed.has('arrowdown')) -
+      Number(pressed.has('w') || pressed.has('arrowup'));
     if (goal !== null) {
-      const distance = goal - point.x;
-      dx = THREE.MathUtils.clamp(distance * 4, -1, 1);
-      if (Math.abs(distance) < 0.025) touchGoal.current = null;
+      dx = (goal.x - point.x) * 3;
+      dz = (goal.y - point.z) * 3;
+      if (Math.hypot(dx, dz) < 0.075) touchGoal.current = null;
+    }
+    if (!active || paused) {
+      dx = 0;
+      dz = 0;
     }
     const magnitude = Math.max(1, Math.hypot(dx, dz));
     const velocity = speed.current;
-    velocity.x = THREE.MathUtils.damp(velocity.x, (dx / magnitude) * 0.88, 9, dt);
-    velocity.y = THREE.MathUtils.damp(velocity.y, (dz / magnitude) * 0.72, 9, dt);
-    const xLimit = mobile ? 0.62 : 1.2;
+    velocity.x = THREE.MathUtils.damp(velocity.x, (dx / magnitude) * 1.02, 11, dt);
+    velocity.y = THREE.MathUtils.damp(velocity.y, (dz / magnitude) * 1.0, 11, dt);
     const nextX = THREE.MathUtils.clamp(point.x + velocity.x * dt, -xLimit, xLimit);
-    const nextZ = THREE.MathUtils.clamp(point.z + velocity.y * dt, 2.65, 3.7);
-    const moving = active && Math.hypot(nextX - point.x, nextZ - point.z) > dt * 0.07;
+    const nextZ = THREE.MathUtils.clamp(point.z + velocity.y * dt, far, near);
+    const traveled = Math.hypot(nextX - point.x, nextZ - point.z);
+    const moving = active && traveled > dt * 0.045;
+    if (moving) walkDistanceRef.current += traveled;
     if (moving !== walkingNow.current) {
       walkingNow.current = moving;
       setWalking(moving);
@@ -133,6 +170,13 @@ export default function Hero({
       Math.cos(facing - actor.current.rotation.y),
     );
     actor.current.rotation.y += angle * (1 - Math.exp(-7 * dt));
+    if (active) {
+      camera.updateMatrixWorld();
+      const screen = projected.current.set(point.x, 1.08, point.z).project(camera);
+      gl.domElement.dataset.mascotWorld = `${point.x.toFixed(3)},${point.z.toFixed(3)}`;
+      gl.domElement.dataset.mascotScreen = `${screen.x.toFixed(3)},${screen.y.toFixed(3)}`;
+      gl.domElement.dataset.mascotGait = moving ? 'walk' : 'idle';
+    }
     if (reduced && (moving || pressed.size || goal !== null || Math.abs(angle) > 0.01))
       invalidate();
   });
@@ -150,20 +194,36 @@ export default function Hero({
           toneMapped={false}
         />
       </mesh>
-      <group ref={actor} position={position.current} onClick={wave}>
-        <ContactShadow position={[0, 0.068, 0]} scale={[0.54, 0.33, 1]} />
-        <Mascot state={walking ? 'walk' : state} reduced={reduced} hero />
+      <group ref={actor} position={position.current}>
+        <ContactShadow position={[0, 0.008, 0]} scale={[0.54, 0.33, 1]} />
+        <group
+          onClick={(event) => {
+            event.stopPropagation();
+            wave();
+          }}
+        >
+          <Mascot
+            state={walking ? 'walk' : state}
+            reduced={reduced}
+            walkDistanceRef={walkDistanceRef}
+            hero
+          />
+        </group>
       </group>
       {active && mobile && (
         <mesh
-          position={[0, 0.085, 3.2]}
+          position={[0, 0.015, (far + near) / 2 + 0.5]}
           rotation-x={-Math.PI / 2}
           onClick={(event) => {
-            touchGoal.current = THREE.MathUtils.clamp(event.point.x, -0.62, 0.62);
+            if (paused) return;
+            touchGoal.current = new THREE.Vector2(
+              THREE.MathUtils.clamp(event.point.x, -xLimit, xLimit),
+              THREE.MathUtils.clamp(event.point.z, far, near),
+            );
             invalidate();
           }}
         >
-          <planeGeometry args={[2.65, 1.9]} />
+          <planeGeometry args={[3.4, near - far + 2.4]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}

@@ -1,5 +1,26 @@
 import { test, expect } from '@playwright/test';
 
+test('the landing guide moves after skipping with a navigation button focused', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip intro' }).click();
+  await page.getByRole('button', { name: 'Return to atelier' }).focus();
+  const canvas = page.locator('canvas');
+  const axis = async (attribute: string, i: number) =>
+    Number((await canvas.getAttribute(attribute))?.split(',')[i]);
+  await expect(canvas).toHaveAttribute('data-mascot-world', '0.000,3.200', { timeout: 20_000 });
+  const screen = await axis('data-mascot-screen', 0);
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => axis('data-mascot-world', 0)).toBeGreaterThan(0.35);
+  await expect.poll(() => axis('data-mascot-screen', 0)).toBeGreaterThan(screen + 0.055);
+  await page.keyboard.up('ArrowRight');
+  await expect(canvas).toHaveAttribute('data-mascot-gait', 'idle');
+  await page.keyboard.down('w');
+  await expect.poll(() => axis('data-mascot-world', 1)).toBeLessThan(2.35);
+  await page.keyboard.up('w');
+});
+
 test('six physical chapters enter distinct worlds and return to the book', async ({
   page,
 }, info) => {

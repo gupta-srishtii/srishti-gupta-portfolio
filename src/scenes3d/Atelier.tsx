@@ -136,7 +136,7 @@ function CameraRig({
               ? journey.inspected === null
                 ? [0, 2.2, mobile ? 6.8 : 5.2]
                 : [(index - 1) * 2.8, 2.1, mobile ? 0.8 : -0.1]
-              : [heroCamera.x + drift + heroPosition.current.x * 0.27, heroCamera.y, heroCamera.z];
+              : [heroCamera.x + drift + heroPosition.current.x * 0.1, heroCamera.y, heroCamera.z];
     const target =
       v === 'book'
         ? [mobile ? 0 : -0.55, 1.6, 0.55]
@@ -154,7 +154,7 @@ function CameraRig({
                   ),
                   2.65,
                 ]
-              : [heroPosition.current.x * 0.34, mobile ? 1.42 : 1.28, 2.65];
+              : [heroPosition.current.x * 0.12, mobile ? 1.42 : 1.28, 2.65];
     const alpha = reduced || camera.position.x > 50 ? 1 : 1 - Math.exp(-3 * Math.min(dt, 0.5));
     destination.set(pos[0], pos[1], pos[2]);
     aim.set(target[0], target[1], target[2]);
@@ -320,6 +320,7 @@ export default function Atelier({
           <pointLight position={[1.55, 2.3, 2.4]} color="#9ed1e8" intensity={5} distance={3.3} />
           <Hero
             active={journey.view === 'studio'}
+            paused={paused}
             mobile={mobile}
             reduced={reduced}
             state={mascot}
