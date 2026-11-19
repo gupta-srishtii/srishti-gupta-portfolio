@@ -1,22 +1,34 @@
 'use client';
 import { useEffect, useMemo } from 'react';
 import { emptyExhibitLabel, gallerySlots, type RealmId } from '@/data/portfolio';
-import { Books, Box, Frame, Lantern, Plant } from '../Objects';
+import { Books, Box, Frame, Plant } from '../Objects';
 import { branch, grownTrunk } from './geometry';
 import { ContactShadow } from './Studio';
-import { ExhibitLabel, ExhibitionArchitecture } from './ExhibitionArchitecture';
+import { ExhibitLabel, GreenhouseArchitecture } from './ExhibitionArchitecture';
 import ProjectAtom from './ProjectAtom';
 import WorldArtifact from './WorldArtifact';
+import WorldBackdrop from './WorldBackdrop';
+import {
+  Easel,
+  GalleryHangers,
+  PigmentHalo,
+  ProjectorBeam,
+  PrototypeStation,
+} from './ExhibitDetails';
 
 export default function Realms({
   realm,
   inspect,
   inspected,
+  charging,
+  mobile,
   reduced,
 }: {
   realm: RealmId;
   inspect: (i: number, at?: [number, number, number]) => void;
   inspected: number | null;
+  charging?: number;
+  mobile: boolean;
   reduced: boolean;
 }) {
   const slots = gallerySlots(realm);
@@ -44,8 +56,6 @@ export default function Realms({
     },
     [tree, limbs],
   );
-  const roomColor =
-    realm === 'motion' || realm === 'code' ? '#20252d' : realm === 'art' ? '#4b5b42' : '#34483e';
   const artifact =
     realm === 'books'
       ? 'book'
@@ -56,19 +66,21 @@ export default function Realms({
           : null;
   return (
     <group>
-      <mesh position-y={-0.17} rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[7, 64]} />
-        <meshStandardMaterial color="#555c49" roughness={1} />
-      </mesh>
+      <WorldBackdrop key={realm} realm={realm} />
+      {realm === 'code' && (
+        <mesh position={[0, -0.14, -2.7]} rotation-x={-Math.PI / 2}>
+          <ringGeometry args={[2.9, 3.05, 96]} />
+          <meshBasicMaterial color="#a69062" transparent opacity={0.73} />
+        </mesh>
+      )}
       <ContactShadow position={[0, 0.01, -2]} scale={[5, 3, 1]} />
-      {realm !== 'books' && <Box size={[12, 5, 0.15]} position={[0, 2.4, -4]} color={roomColor} />}
       {realm === 'books' && (
         <>
-          <mesh geometry={tree} position={[0, 0, -5.8]}>
+          <mesh geometry={tree} position={[-4, 0, -6.8]} rotation-z={-0.18}>
             <meshStandardMaterial color="#666344" roughness={1} />
           </mesh>
           {limbs.map((g, i) => (
-            <mesh key={i} geometry={g}>
+            <mesh key={i} geometry={g} position={[-3.7, 0, -1.4]}>
               <meshStandardMaterial color="#6f714c" />
             </mesh>
           ))}
@@ -85,16 +97,17 @@ export default function Realms({
           <ProjectAtom
             slots={slots}
             inspected={inspected}
+            charging={charging}
+            compact={mobile}
             reduced={reduced}
             inspect={(index, point) => inspect(index, [point.x, point.y, point.z])}
           />
           <pointLight position={[0, 2, -1]} intensity={8} color="#a0c7c3" distance={8} />
         </>
       )}
-      {realm === 'design' && <ExhibitionArchitecture greenhouse={false} />}
       {realm === 'art' && (
         <>
-          <ExhibitionArchitecture greenhouse />
+          <GreenhouseArchitecture />
           {[-4, -2, 2, 4].map((x) => (
             <Plant key={x} position={[x, 0, -2]} scale={1.3} />
           ))}
@@ -116,20 +129,7 @@ export default function Realms({
       ) : null}
       {realm === 'motion' && (
         <>
-          <mesh position={[0, 2.7, -3.88]}>
-            <planeGeometry args={[5, 2.8]} />
-            <meshStandardMaterial color="#bdbdaa" emissive="#82948b" emissiveIntensity={0.3} />
-          </mesh>
-          {[-1, 1].map((s) => (
-            <group key={s} position={[s * 4.3, 2.4, -3.6]}>
-              {Array.from({ length: 10 }, (_, i) => (
-                <mesh key={i} position={[i * 0.1 * s, 0, Math.sin(i * 1.5) * 0.08]}>
-                  <cylinderGeometry args={[0.09, 0.1, 4.7, 12]} />
-                  <meshStandardMaterial color="#642b40" roughness={1} />
-                </mesh>
-              ))}
-            </group>
-          ))}
+          {!reduced && <ProjectorBeam active={inspected !== null} />}
           <mesh position={[4.6, 0.7, 1.5]} rotation-x={Math.PI / 2}>
             <cylinderGeometry args={[0.5, 0.5, 0.15, 32]} />
             <meshStandardMaterial color="#a29674" metalness={0.6} />
@@ -139,6 +139,14 @@ export default function Realms({
       {realm !== 'code' &&
         slots.map((entry, i) => (
           <group key={entry?.id ?? i} position={[(i - 1) * 2.8, 0, 0]}>
+            {realm === 'art' && <Easel />}
+            {realm === 'design' && <GalleryHangers />}
+            {realm === 'ux' && <PrototypeStation />}
+            {realm === 'art' && inspected === i && (
+              <group position={[0, 2.1, -3.44]}>
+                <PigmentHalo visible reduced={reduced} />
+              </group>
+            )}
             {artifact && !entry?.image ? (
               <group position={[0, realm === 'motion' ? 1.5 : 2.1, -3.44]}>
                 <WorldArtifact
@@ -161,12 +169,16 @@ export default function Realms({
               title={entry?.title ?? emptyExhibitLabel(realm, i)}
               status={entry?.medium ?? (entry ? '' : 'AWAITING APPROVED WORK')}
             />
-            <Lantern position={[0, 3.5, -3.05]} />
+            {['design', 'ux', 'art'].includes(realm) && (
+              <pointLight
+                position={[0, 3.25, -2.7]}
+                intensity={realm === 'art' ? 2.1 : 3.8}
+                distance={3.7}
+                color={realm === 'ux' ? '#a9d7e8' : '#ffd3a0'}
+              />
+            )}
           </group>
         ))}
-      {[-5, 5].map((x) => (
-        <Plant key={x} position={[x, 0, -3]} scale={1.3} />
-      ))}
       {!reduced && realm === 'motion' && (
         <pointLight position={[0, 3, 3]} color="#d9dfd2" intensity={9} distance={10} />
       )}

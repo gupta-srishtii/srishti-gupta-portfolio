@@ -39,6 +39,11 @@ test('six physical chapters enter distinct worlds and return to the book', async
     .toBeGreaterThan(20);
   await page.screenshot({ path: 'test-results/' + info.project.name + '-atelier.png' });
   await page.getByRole('button', { name: 'Open the sketchbook' }).click();
+  await page.getByRole('button', { name: 'Work index', exact: true }).click();
+  await expect(
+    page.getByRole('dialog').getByRole('link', { name: /Numerical Area & Volume Calculator/ }),
+  ).toHaveAttribute('href', 'https://github.com/gupta-srishtii/area-and-volume');
+  await page.keyboard.press('Escape');
   const chapters = [
     'Graphic Design',
     'Technical Projects',
@@ -67,6 +72,14 @@ test('six physical chapters enter distinct worlds and return to the book', async
     ).toBeVisible();
     await page.screenshot({ path: 'test-results/' + info.project.name + '-realm-' + i + '.png' });
     if (i === 0) {
+      await page.getByRole('button', { name: 'Visit the UI/UX studio' }).click();
+      await expect(
+        page.getByRole('heading', { name: 'The UI/UX studio', exact: true }),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Visit the graphic design gallery' }).click();
+      await expect(
+        page.getByRole('heading', { name: 'Graphic design', exact: true }),
+      ).toBeVisible();
       const before = await page.locator('canvas').getAttribute('data-camera');
       await page.keyboard.down('w');
       await page.waitForTimeout(350);

@@ -4,6 +4,16 @@
 
 ---
 
+## Cinematic worlds and approved asset pipeline
+
+The six chapter worlds and the adjacent UI/UX studio have separate environment mattes with interactive 3D foregrounds. The design exhibit uses hung posters. UI/UX uses freestanding display stations. The greenhouse has easels and a pigment burst when an exhibit is selected. The technical orrery carries one verified project on an actual tilted orbit, holds it during a cast, and brings it forward for inspection. The library book opens, the archive case lights, and the film reel spins and activates a projection cone. The sketchbook still owns the six chapters. The UI/UX studio is a wing of Graphic Design.
+
+Wand casting now has a tip light, a curved trail with delayed motes, an expanding impact and left/right audio panning. The Work index opens the same verified repository directly without entering a 3D world. The art and film catalog supports approved artwork, case-study context, native video and optional captions, and a supplied public résumé PDF or email. Repeated titles, byte-identical images and repeated project URLs are checked before builds. No new project was added without provenance.
+
+Blender 4.5.9 LTS runs from the ignored portable extraction. The export script and Three.js loader were exercised with a synthetic skinned fixture and Idle, Walk, Turn, and Cast clips. Neither the fixture nor the portable tool is published. The public catalog still has no custom character or supplied personal exhibits. The procedural stand-in remains. Further likeness sculpting, topology, weighting, cloth, foot contact, and animation review need an approved production character. A film can be configured, but no approved film is available to test as portfolio content.
+
+The viewport screenshots are the six numbered `test-results/cinematic-1440-world-*.png` and `test-results/cinematic-390-world-*.png` files. The separate UX views are `cinematic-1440-ux.png` and `cinematic-390-ux.png`. The asset and render pipeline is documented in [ASSET_PIPELINE.md](ASSET_PIPELINE.md). Refer to [PROJECT_AUDIT.md](PROJECT_AUDIT.md) before making any new technical exhibit or related-repository link public.
+
 ## Movement, wand and exhibition checkpoints
 
 The movement regression came from a short forward boundary and a focus guard that blocked navigation buttons and links. The guide now accepts WASD and the arrow keys, travels far enough to read against the fixed scene, turns toward the direction of movement, and uses alternating procedural hip and knee poses with counter-swing and idle blending. The touch control targets a point on the path. The character still uses the temporary model and has no production skinning or cloth simulation.

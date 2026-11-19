@@ -1,5 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Component, useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   entries,
@@ -177,7 +178,10 @@ export default function Experience() {
     setPanel(null);
     setReading(null);
     const chapter = chapters.findIndex(
-      (item) => item.realm === id || (id === 'gifts' && item.realm === 'honors'),
+      (item) =>
+        item.realm === id ||
+        (id === 'gifts' && item.realm === 'honors') ||
+        (id === 'ux' && item.realm === 'design'),
     );
     if (chapter >= 0) dispatch({ type: 'chapter', index: chapter });
     if (id === 'about' || supported === false || lightweight) openPanel(id);
@@ -187,25 +191,27 @@ export default function Experience() {
     }
   };
   const fallback = supported === false || lightweight;
-  const castAt = (at: CastTarget['at'], action: () => void) => {
+  const castAt = (at: CastTarget['at'], action: () => void, exhibit?: number) => {
     const scene = journey.view;
     if (fallback || reduced || (scene !== 'studio' && scene !== 'gallery' && scene !== 'book')) {
       action();
       return;
     }
     window.clearTimeout(castTimer.current);
-    setSpell({ target: { at, scene, id: ++castId.current }, scope: journey });
+    setSpell({ target: { at, scene, id: ++castId.current, exhibit }, scope: journey });
     setMascot('cast');
     castTimer.current = window.setTimeout(() => {
       setSpell(null);
       setMascot('idle');
       action();
-    }, 440);
+    }, 620);
   };
   const castBook = () => castAt([0.86, 1.35, 0.65], openBook);
   const castExhibit = (index: number, at?: CastTarget['at']) =>
-    castAt(at ?? [(index - 1) * 2.8, realm === 'motion' ? 1.5 : 2.1, -3.45], () =>
-      dispatch({ type: 'inspect', index }),
+    castAt(
+      at ?? [(index - 1) * 2.8, realm === 'motion' ? 1.5 : 2.1, -3.45],
+      () => dispatch({ type: 'inspect', index }),
+      index,
     );
   const castPortal = (target: RealmId) => castAt([0.31, 1.72, 0.55], () => enterRealm(target));
   const activeSpell = spell?.scope === journey ? spell.target : null;
@@ -368,9 +374,13 @@ export default function Experience() {
               {reading === 'about'
                 ? profile.bio
                 : reading === 'resume'
-                  ? 'No PDF or verified timeline has been supplied yet.'
+                  ? profile.resume
+                    ? 'The résumé PDF is available below.'
+                    : 'No PDF or verified timeline has been supplied yet.'
                   : reading === 'contact'
-                    ? 'Contact details are coming soon.'
+                    ? profile.email
+                      ? 'Use the email link below to get in touch.'
+                      : 'Contact details are coming soon.'
                     : 'An exhibition in the making. Real work and its stories will be added here.'}
             </p>
           </section>
@@ -400,6 +410,11 @@ export default function Experience() {
                 onClick={() => castPortal(chapters[journey.page].realm)}
               >
                 Enter {chapters[journey.page].world} ↗
+              </button>
+            )}
+            {!reading && (
+              <button className="book-index-link" onClick={() => setPanel('work')}>
+                Work index
               </button>
             )}
             {reading === 'resume' && profile.resume && (
@@ -443,6 +458,14 @@ export default function Experience() {
                 ? 'Drag to look around. Select an exhibit to cast.'
                 : (selected?.title ?? 'An exhibition in the making')}
             </p>
+            {journey.inspected === null && (realm === 'design' || realm === 'ux') && (
+              <button
+                className="text-button adjacent-gallery"
+                onClick={() => enterRealm(realm === 'design' ? 'ux' : 'design')}
+              >
+                {realm === 'design' ? 'Visit the UI/UX studio' : 'Visit the graphic design gallery'}
+              </button>
+            )}
           </section>
           <div className="gallery-actions">
             {gallerySlots(realm).map((entry, i) => (
@@ -460,6 +483,16 @@ export default function Experience() {
             <aside className="inspection">
               <p className="eyebrow">{selected ? 'WORK DETAILS' : 'PLACEHOLDER FRAME'}</p>
               <h2>{selected?.title ?? 'Curating this exhibition'}</h2>
+              {selected?.image && selected.imageAlt && (
+                <Image
+                  className="exhibit-image"
+                  src={selected.image}
+                  alt={selected.imageAlt}
+                  width={960}
+                  height={640}
+                  sizes="(max-width: 700px) 88vw, 320px"
+                />
+              )}
               <p>
                 {selected?.description ??
                   `This space is reserved for ${emptyExhibitLabel(realm, journey.inspected).toLowerCase()}. It is waiting for an approved entry.`}
@@ -478,6 +511,8 @@ export default function Experience() {
                 </a>
               )}
               {selected?.technologies?.length ? <p>{selected.technologies.join(' · ')}</p> : null}
+              {selected?.process && <p>{selected.process}</p>}
+              {selected?.tools?.length ? <p>{selected.tools.join(' · ')}</p> : null}
               {selected?.sourceLinks?.map((link) => (
                 <a
                   key={link.url}
@@ -496,7 +531,11 @@ export default function Experience() {
                   controls
                   playsInline
                   preload="metadata"
-                />
+                >
+                  {selected.captions && (
+                    <track kind="captions" src={selected.captions} srcLang="en" label="English" />
+                  )}
+                </video>
               )}
               <button className="text-button" onClick={() => dispatch({ type: 'back' })}>
                 Return to gallery ←
@@ -530,6 +569,7 @@ export default function Experience() {
       >
         <Ambience
           casting={Boolean(activeSpell)}
+          castPan={activeSpell ? Math.max(-0.75, Math.min(0.75, activeSpell.at[0] / 4)) : 0}
           revealing={journey.view === 'book' && bloom && !reading}
           page={journey.view === 'book' && !reading ? journey.page : null}
         />
@@ -571,7 +611,17 @@ export default function Experience() {
         >
           {panel === 'work' ? (
             <>
-              <p>Choose a discipline to visit its exhibition.</p>
+              <ul className="verified-work-index" aria-label="Verified projects">
+                {entries
+                  .filter((entry) => entry.url)
+                  .map((entry) => (
+                    <li key={entry.id}>
+                      <a href={entry.url} target="_blank" rel="noopener noreferrer">
+                        {entry.title} ↗
+                      </a>
+                    </li>
+                  ))}
+              </ul>
               <div className="modal-realms">
                 {realms
                   .filter((r) => r.id !== 'about')

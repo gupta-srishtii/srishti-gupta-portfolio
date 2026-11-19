@@ -339,16 +339,18 @@ export default function Atelier({
       <Suspense fallback={null}>
         {landing ? (
           <WoodlandLanding reduced={reduced} low={low || mobile} />
-        ) : (
+        ) : journey.view !== 'gallery' ? (
           <Forest reduced={reduced} low={low || mobile} />
-        )}
-        <Atmosphere reduced={reduced} low={low || mobile} />
+        ) : null}
+        {journey.view !== 'gallery' && <Atmosphere reduced={reduced} low={low || mobile} />}
         {!landing &&
           (journey.view === 'gallery' ? (
             <Realms
               realm={realm}
               inspect={inspect}
               inspected={journey.inspected}
+              charging={spell?.exhibit}
+              mobile={mobile}
               reduced={reduced}
             />
           ) : (

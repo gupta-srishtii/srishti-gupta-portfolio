@@ -243,6 +243,37 @@
 .exhibit-video {
   max-width: 100%;
 }
+.exhibit-image {
+  width: 100%;
+  height: auto;
+  max-height: 34vh;
+  object-fit: contain;
+}
+.inspection {
+  max-height: min(63vh, calc(100dvh - 270px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.adjacent-gallery {
+  margin-top: 0.35rem;
+  pointer-events: auto;
+  padding: 5px 0;
+}
+.chapter-controls .book-index-link {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.verified-work-index {
+  margin: 0 0 1.1rem;
+  list-style: none;
+  padding: 0;
+}
+.verified-work-index a {
+  color: #e6ce9e;
+  text-underline-offset: 0.3em;
+}
 .parchment {
   margin: auto;
   inset: 0;

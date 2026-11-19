@@ -80,10 +80,12 @@ export default function Ambience({
   revealing,
   page,
   casting,
+  castPan,
 }: {
   revealing: boolean;
   page: number | null;
   casting: boolean;
+  castPan: number;
 }) {
   const engine = useRef<{
     context: AudioContext;
@@ -118,15 +120,22 @@ export default function Ambience({
       envelope.gain.setValueAtTime(0.001, start);
       envelope.gain.exponentialRampToValueAtTime(opening ? 0.038 : 0.012, start + 0.04);
       envelope.gain.exponentialRampToValueAtTime(0.001, start + duration);
-      tone.connect(envelope).connect(gain);
+      tone.connect(envelope);
+      const pan = cast ? context.createStereoPanner() : null;
+      if (pan) {
+        pan.pan.setValueAtTime(0.28, start);
+        pan.pan.linearRampToValueAtTime(castPan, start + duration * 0.65);
+        envelope.connect(pan).connect(gain);
+      } else envelope.connect(gain);
       tone.start(start);
       tone.stop(start + duration);
       tone.onended = () => {
         tone.disconnect();
         envelope.disconnect();
+        pan?.disconnect();
       };
     });
-  }, [page, playing, revealing, casting]);
+  }, [page, playing, revealing, casting, castPan]);
   useEffect(
     () => () => {
       if (engine.current) {

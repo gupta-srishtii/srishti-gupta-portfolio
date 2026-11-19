@@ -19,8 +19,20 @@ export default function WorldArtifact({
   const [aimed, setAimed] = useState(false);
   const hinge = useRef<THREE.Group>(null);
   const spool = useRef<THREE.Group>(null);
+  const exhibit = useRef<THREE.Group>(null);
   useCursor(aimed);
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
+    if (exhibit.current && kind !== 'film') {
+      const lift = selected ? 0.16 : 0;
+      exhibit.current.position.y = reduced
+        ? lift
+        : THREE.MathUtils.damp(
+            exhibit.current.position.y,
+            lift + Math.sin(clock.elapsedTime * 1.45) * 0.047,
+            5,
+            delta,
+          );
+    }
     if (hinge.current) {
       const angle = selected ? -1.95 : 0;
       hinge.current.rotation.y = reduced
@@ -31,6 +43,7 @@ export default function WorldArtifact({
   });
   return (
     <group
+      ref={exhibit}
       onPointerOver={(event) => {
         event.stopPropagation();
         setAimed(true);
